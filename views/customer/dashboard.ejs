@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Dashboard - MicroFinance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="page-bg">
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Menu">
+        <i class="fas fa-bars text-xl"></i>
+    </button>
+    
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <div class="dashboard-shell">
+        <!-- Sidebar -->
+        <aside class="sidebar-modern" id="sidebar">
+            <div class="flex items-center gap-3 mb-8">
+                <div class="h-11 w-11 rounded-xl bg-white/10 flex items-center justify-center text-white">
+                    <i class="fas fa-piggy-bank"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-white/70">Customer Portal</p>
+                    <h1 class="text-lg font-bold">MicroFinance</h1>
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <p class="nav-title">Overview</p>
+                <a href="#dashboard" class="active"><i class="fas fa-chart-line"></i> Dashboard</a>
+                <a href="#my-loans"><i class="fas fa-credit-card"></i> My Loans</a>
+                <a href="#apply-loan"><i class="fas fa-file-contract"></i> Apply for Loan</a>
+                <a href="#kyc"><i class="fas fa-id-card"></i> KYC Verification</a>
+                <a href="#profile"><i class="fas fa-user-circle"></i> Profile</a>
+            </div>
+
+            <div class="nav-group">
+                <button id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content-area">
+            <div class="content-topbar">
+                <div>
+                    <p class="text-sm text-slate-500">Welcome back</p>
+                    <h1 class="text-2xl font-bold text-slate-900">Customer Dashboard</h1>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="h-10 w-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <span id="userName" class="text-slate-800 font-semibold"></span>
+                </div>
+            </div>
+
+            <div class="stat-grid mb-6">
+                <div class="stat-card-modern">
+                    <div class="stat-number" id="totalApplications">0</div>
+                    <div class="stat-label">Total Applications</div>
+                </div>
+                <div class="stat-card-modern">
+                    <div class="stat-number" id="approvedLoans">0</div>
+                    <div class="stat-label">Approved Loans</div>
+                </div>
+                <div class="stat-card-modern">
+                    <div class="stat-number" id="activeLoans">0</div>
+                    <div class="stat-label">Active Loans</div>
+                </div>
+                <div class="stat-card-modern">
+                    <div class="stat-number" id="totalBorrowed">₹0</div>
+                    <div class="stat-label">Total Borrowed</div>
+                </div>
+            </div>
+
+            <div class="card-ghost mb-6">
+                <h2 class="text-lg font-bold text-slate-900 mb-3">Quick Actions</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <button class="btn btn-primary w-full flex items-center justify-center gap-2">
+                        <i class="fas fa-plus"></i> Apply for Loan
+                    </button>
+                    <button class="btn btn-light w-full flex items-center justify-center gap-2">
+                        <i class="fas fa-eye"></i> View Loans
+                    </button>
+                    <button class="btn btn-danger w-full flex items-center justify-center gap-2">
+                        <i class="fas fa-lock"></i> Complete KYC
+                    </button>
+                </div>
+            </div>
+
+            <div class="card table-elevated mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-slate-900">Recent Applications</h2>
+                    <span class="pill-indicator"><i class="fas fa-clock"></i> Latest updates</span>
+                </div>
+                <div id="applicationsContainer" class="overflow-x-auto">
+                    <p class="text-gray-600">Loading applications...</p>
+                </div>
+            </div>
+
+            <div class="card table-elevated">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-slate-900">Available Loan Products</h2>
+                    <span class="pill-indicator"><i class="fas fa-bolt"></i> Curated for you</span>
+                </div>
+                <div id="loansContainer" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <p class="text-gray-600">Loading loan products...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Check authentication
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+        if (!token) {
+            window.location.href = '/customer/login';
+        }
+
+        document.getElementById('userName').textContent = user.firstName + ' ' + user.lastName;
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/customer/login';
+        });
+
+        // Load dashboard data
+        async function loadDashboard() {
+            try {
+                const response = await fetch('/api/customers/dashboard', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const stats = data.data.statistics;
+                    document.getElementById('totalApplications').textContent = stats.totalApplications;
+                    document.getElementById('approvedLoans').textContent = stats.approvedLoans;
+                    document.getElementById('activeLoans').textContent = stats.activeLoans;
+                    document.getElementById('totalBorrowed').textContent = '₹' + (stats.totalBorrowed / 100000).toFixed(1) + 'L';
+                }
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+
+        // Load loan products
+        async function loadLoans() {
+            try {
+                const response = await fetch('/api/loans');
+                const data = await response.json();
+
+                if (data.success && data.data.length > 0) {
+                    const loansHtml = data.data.slice(0, 3).map(loan => `
+                        <div class="border border-gray-200 rounded-lg p-6">
+                            <h3 class="font-bold text-lg mb-2">${loan.name}</h3>
+                            <p class="text-sm text-gray-600 mb-4">${loan.description}</p>
+                            <div class="mb-4">
+                                <p class="text-sm"><strong>Rate:</strong> ${loan.annualInterestRate}% p.a.</p>
+                                <p class="text-sm"><strong>Amount:</strong> ₹${loan.minAmount} - ₹${loan.maxAmount}</p>
+                            </div>
+                            <button class="btn-primary w-full">Apply Now</button>
+                        </div>
+                    `).join('');
+                    document.getElementById('loansContainer').innerHTML = loansHtml;
+                }
+            } catch (error) {
+                console.error('Error loading loans:', error);
+            }
+        }
+
+        // Load on page load
+        loadDashboard();
+        loadLoans();
+
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const mobileOverlay = document.getElementById('mobileOverlay');
+        
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+                mobileOverlay.classList.toggle('active');
+                const icon = mobileMenuBtn.querySelector('i');
+                icon.classList.toggle('fa-bars');
+                icon.classList.toggle('fa-times');
+            });
+        }
+        
+        if (mobileOverlay) {
+            mobileOverlay.addEventListener('click', () => {
+                sidebar.classList.remove('active');
+                mobileOverlay.classList.remove('active');
+                const icon = mobileMenuBtn.querySelector('i');
+                icon.classList.remove('fa-times');
+                icon.classList.add('fa-bars');
+            });
+        }
+    </script>
+</body>
+</html>

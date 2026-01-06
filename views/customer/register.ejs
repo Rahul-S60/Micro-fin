@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - MicroFinance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="page-bg min-h-screen py-6 sm:py-10 px-4">
+    <div class="w-full max-w-3xl mx-auto surface rounded-2xl">
+        <div class="p-6 sm:p-8 lg:p-10">
+            <!-- Header -->
+            <div class="text-center mb-6 sm:mb-8 space-y-2">
+                <div class="inline-flex items-center justify-center h-12 w-12 sm:h-14 sm:w-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-blue-600 text-white shadow-md">
+                    <i class="fas fa-piggy-bank text-xl sm:text-2xl"></i>
+                </div>
+                <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Create Your Account</h1>
+                <p class="text-slate-500 text-sm sm:text-base">Three quick steps to access your dashboard</p>
+            </div>
+
+            <!-- Step Indicator -->
+            <div class="flex items-center justify-center gap-2 sm:gap-3 mb-6 sm:mb-8 text-xs sm:text-sm font-semibold overflow-x-auto pb-2">
+                <span class="pill-indicator step active whitespace-nowrap"><i class="fas fa-user"></i> <span class="hidden sm:inline">Step</span> 1</span>
+                <span class="pill-indicator step inactive whitespace-nowrap"><i class="fas fa-map-marker-alt"></i> <span class="hidden sm:inline">Step</span> 2</span>
+                <span class="pill-indicator step inactive whitespace-nowrap"><i class="fas fa-briefcase"></i> <span class="hidden sm:inline">Step</span> 3</span>
+            </div>
+
+            <!-- Form -->
+            <form id="registerForm" class="space-y-6">
+                <!-- Step 1: Personal Information -->
+                <div id="step1" class="space-y-6 form-section">
+                    <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2"><i class="fas fa-user-circle text-indigo-600"></i> Personal Information</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">First Name</label>
+                            <input 
+                                type="text" 
+                                name="firstName" 
+                                class="form-control"
+                                placeholder="John"
+                                required
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Last Name</label>
+                            <input 
+                                type="text" 
+                                name="lastName" 
+                                class="form-control"
+                                placeholder="Doe"
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Email Address</label>
+                        <input 
+                            type="email" 
+                            name="email" 
+                            class="form-control"
+                            placeholder="john@example.com"
+                            required
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Phone Number</label>
+                        <input 
+                            type="tel" 
+                            name="phone" 
+                            class="form-control"
+                            placeholder="9876543210"
+                            pattern="[0-9]{10}"
+                            required
+                        >
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Password</label>
+                            <input 
+                                type="password" 
+                                name="password" 
+                                class="form-control"
+                                placeholder="Min. 6 characters"
+                                required
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Confirm Password</label>
+                            <input 
+                                type="password" 
+                                name="confirmPassword" 
+                                class="form-control"
+                                placeholder="Confirm password"
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-primary w-full" onclick="nextStep(1)">
+                        Continue to Address
+                    </button>
+                </div>
+
+                <!-- Step 2: Address Information -->
+                <div id="step2" class="space-y-6 hidden form-section">
+                    <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2"><i class="fas fa-map-pin text-indigo-600"></i> Address Information</h3>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Street Address</label>
+                        <input 
+                            type="text" 
+                            name="street" 
+                            class="form-control"
+                            placeholder="123 Main Street"
+                            required
+                        >
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">City</label>
+                            <input 
+                                type="text" 
+                                name="city" 
+                                class="form-control"
+                                placeholder="Mumbai"
+                                required
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">State</label>
+                            <input 
+                                type="text" 
+                                name="state" 
+                                class="form-control"
+                                placeholder="Maharashtra"
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Pincode</label>
+                        <input 
+                            type="text" 
+                            name="pincode" 
+                            class="form-control"
+                            placeholder="400001"
+                            pattern="[0-9]{6}"
+                            required
+                        >
+                    </div>
+
+                    <div class="flex gap-4">
+                        <button type="button" class="btn btn-secondary w-1/2" onclick="prevStep(2)">
+                            Back
+                        </button>
+                        <button type="button" class="btn btn-primary w-1/2" onclick="nextStep(2)">
+                            Continue to Financial
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Financial Information -->
+                <div id="step3" class="space-y-6 hidden form-section">
+                    <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2"><i class="fas fa-briefcase text-indigo-600"></i> Financial Information</h3>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Monthly Income (₹)</label>
+                        <input 
+                            type="number" 
+                            name="monthlyIncome" 
+                            class="form-control"
+                            placeholder="50000"
+                            min="0"
+                            required
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Occupation</label>
+                        <input 
+                            type="text" 
+                            name="occupation" 
+                            class="form-control"
+                            placeholder="Software Engineer"
+                            required
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Employment Type</label>
+                        <select name="employmentType" class="form-control" required>
+                            <option value="">Select employment type</option>
+                            <option value="salaried">Salaried</option>
+                            <option value="self-employed">Self-Employed</option>
+                            <option value="business">Business Owner</option>
+                            <option value="retired">Retired</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-start gap-2 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <input type="checkbox" id="terms" class="mt-1" required>
+                        <label for="terms" class="text-sm text-gray-700">
+                            I agree to the Terms and Conditions and Privacy Policy
+                        </label>
+                    </div>
+
+                    <span class="form-error block" id="errorMessage"></span>
+
+                    <div class="flex gap-4">
+                        <button type="button" class="btn btn-secondary w-1/2" onclick="prevStep(3)">
+                            Back
+                        </button>
+                        <button type="submit" class="btn btn-primary w-1/2">
+                            Create Account
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Footer Links -->
+            <p class="text-center text-gray-600 text-sm mt-6">
+                Already have an account?
+                <a href="/customer/login" class="text-purple-600 font-semibold hover:text-purple-700">
+                    Login Here
+                </a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function nextStep(currentStep) {
+            // Validate current step
+            if (!validateStep(currentStep)) return;
+
+            document.getElementById(`step${currentStep}`).classList.add('hidden');
+            document.getElementById(`step${currentStep + 1}`).classList.remove('hidden');
+
+            // Update step indicator
+            updateStepIndicator(currentStep + 1);
+        }
+
+        function prevStep(currentStep) {
+            document.getElementById(`step${currentStep}`).classList.add('hidden');
+            document.getElementById(`step${currentStep - 1}`).classList.remove('hidden');
+
+            // Update step indicator
+            updateStepIndicator(currentStep - 1);
+        }
+
+        function updateStepIndicator(activeStep) {
+            document.querySelectorAll('.step').forEach((step, index) => {
+                if (index < activeStep) {
+                    step.classList.add('active');
+                    step.classList.remove('inactive');
+                } else {
+                    step.classList.remove('active');
+                    step.classList.add('inactive');
+                }
+            });
+        }
+
+        function validateStep(step) {
+            const form = document.getElementById('registerForm');
+            const inputs = form.querySelectorAll(`#step${step} input, #step${step} select`);
+            
+            for (let input of inputs) {
+                if (!input.checkValidity()) {
+                    input.classList.add('border-red-500');
+                    return false;
+                }
+            }
+
+            if (step === 1) {
+                const password = form.querySelector('input[name="password"]').value;
+                const confirmPassword = form.querySelector('input[name="confirmPassword"]').value;
+                if (password !== confirmPassword) {
+                    document.getElementById('errorMessage').textContent = 'Passwords do not match';
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+
+            try {
+                const response = await fetch('/api/auth/customer/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    localStorage.setItem('token', result.token);
+                    localStorage.setItem('user', JSON.stringify(result.customer));
+                    alert('Account created successfully!');
+                    window.location.href = '/customer/dashboard';
+                } else {
+                    document.getElementById('errorMessage').textContent = result.message || 'Registration failed';
+                }
+            } catch (error) {
+                document.getElementById('errorMessage').textContent = 'Network error. Please try again.';
+            }
+        });
+    </script>
+</body>
+</html>
