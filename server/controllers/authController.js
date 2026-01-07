@@ -37,9 +37,23 @@ const generateToken = (id, role, email) => {
  */
 const customerRegister = async (req, res) => {
   try {
+    // Log received data for debugging
+    console.log('Received registration data:', {
+      ...req.body,
+      password: '***',
+      confirmPassword: '***'
+    });
+    console.log('Address fields received:', {
+      street: req.body.street,
+      city: req.body.city,
+      state: req.body.state,
+      pincode: req.body.pincode
+    });
+
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.error('Validation errors:', errors.array());
       return res.status(400).json({
         success: false,
         message: 'Validation Error',
@@ -101,7 +115,20 @@ const customerRegister = async (req, res) => {
       employmentType,
     });
 
+    console.log('Saving customer:', {
+      firstName,
+      lastName,
+      email,
+      phone,
+      address: customer.address,
+      monthlyIncome,
+      occupation,
+      employmentType
+    });
+
     await customer.save();
+
+    console.log('✓ Customer saved successfully:', customer._id);
 
     // Generate token
     const token = generateToken(customer._id, 'customer', customer.email);
@@ -114,10 +141,16 @@ const customerRegister = async (req, res) => {
       customer: customer.getPublicProfile(),
     });
   } catch (error) {
-    console.error('Registration Error:', error);
+    console.error('❌ Registration Error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      stack: error.stack
+    });
+    
     res.status(500).json({
       success: false,
-      message: 'Registration failed.',
+      message: 'Registration failed: ' + error.message,
       error: error.message,
     });
   }

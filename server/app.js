@@ -88,9 +88,8 @@ app.use('/api/loans', loanRoutes);
 
 // Landing Page
 app.get('/', (req, res) => {
-  res.render('shared/layout', {
-    title: 'Micro Finance Management System',
-    body: 'shared/body',
+  res.render('index', {
+    title: 'MicroFinance - Home',
   });
 });
 

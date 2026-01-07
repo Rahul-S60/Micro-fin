@@ -102,6 +102,8 @@
                         </div>
                     </div>
 
+                    <span class="form-error block" id="step1Error"></span>
+
                     <button type="button" class="btn btn-primary w-full" onclick="nextStep(1)">
                         Continue to Address
                     </button>
@@ -156,7 +158,7 @@
                             required
                         >
                     </div>
-
+                    <span class="form-error block" id="step2Error"></span>
                     <div class="flex gap-4">
                         <button type="button" class="btn btn-secondary w-1/2" onclick="prevStep(2)">
                             Back
@@ -238,14 +240,30 @@
 
     <script>
         function nextStep(currentStep) {
+            // Clear previous error messages
+            const errorElement = document.getElementById(`step${currentStep}Error`);
+            if (errorElement) {
+                errorElement.textContent = '';
+            }
+            
             // Validate current step
-            if (!validateStep(currentStep)) return;
+            const validationResult = validateStep(currentStep);
+            if (!validationResult.isValid) {
+                if (errorElement) {
+                    errorElement.textContent = validationResult.message || 'Please fill in all required fields correctly';
+                    errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                return;
+            }
 
             document.getElementById(`step${currentStep}`).classList.add('hidden');
             document.getElementById(`step${currentStep + 1}`).classList.remove('hidden');
 
             // Update step indicator
             updateStepIndicator(currentStep + 1);
+            
+            // Scroll to top of form
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function prevStep(currentStep) {
@@ -254,6 +272,9 @@
 
             // Update step indicator
             updateStepIndicator(currentStep - 1);
+            
+            // Scroll to top of form
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function updateStepIndicator(activeStep) {
@@ -270,12 +291,36 @@
 
         function validateStep(step) {
             const form = document.getElementById('registerForm');
-            const inputs = form.querySelectorAll(`#step${step} input, #step${step} select`);
+            const inputs = form.querySelectorAll(`#step${step} input:not([type="hidden"]), #step${step} select`);
+            
+            let isValid = true;
+            let invalidFields = [];
             
             for (let input of inputs) {
-                if (!input.checkValidity()) {
-                    input.classList.add('border-red-500');
-                    return false;
+                input.classList.remove('border-red-500');
+                
+                // Special handling for checkboxes
+                if (input.type === 'checkbox') {
+                    if (input.hasAttribute('required') && !input.checked) {
+                        input.classList.add('border-red-500');
+                        isValid = false;
+                        const label = form.querySelector(`label[for="${input.id}"]`);
+                        invalidFields.push(label ? label.textContent.trim() : input.getAttribute('name'));
+                    }
+                } else {
+                    // Skip optional fields or check validity
+                    if (input.hasAttribute('required') || input.value.trim() !== '') {
+                        if (!input.checkValidity() || input.value.trim() === '') {
+                            input.classList.add('border-red-500');
+                            isValid = false;
+                            
+                            // Get field name from label or name attribute
+                            const label = form.querySelector(`label[for="${input.id}"]`) || 
+                                         (input.previousElementSibling?.tagName === 'LABEL' ? input.previousElementSibling : null);
+                            const fieldName = label ? label.textContent.trim() : input.getAttribute('name');
+                            invalidFields.push(fieldName);
+                        }
+                    }
                 }
             }
 
@@ -283,19 +328,83 @@
                 const password = form.querySelector('input[name="password"]').value;
                 const confirmPassword = form.querySelector('input[name="confirmPassword"]').value;
                 if (password !== confirmPassword) {
-                    document.getElementById('errorMessage').textContent = 'Passwords do not match';
-                    return false;
+                    form.querySelector('input[name="confirmPassword"]').classList.add('border-red-500');
+                    return {
+                        isValid: false,
+                        message: 'Passwords do not match'
+                    };
                 }
             }
 
-            return true;
+            if (!isValid) {
+                return {
+                    isValid: false,
+                    message: `Please fill in all required fields correctly${invalidFields.length > 0 ? ': ' + invalidFields.slice(0, 3).join(', ') : ''}`
+                };
+            }
+
+            return { isValid: true };
         }
 
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData);
+            // Clear previous errors
+            document.getElementById('errorMessage').textContent = '';
+
+            const form = e.target;
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            
+            // Disable submit button and show loading
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
+            
+            // Helper function to get form value safely
+            const getFormValue = (name, isSelect = false) => {
+                const selector = isSelect ? `select[name="${name}"]` : `input[name="${name}"]`;
+                const element = form.querySelector(selector);
+                if (!element) {
+                    console.error(`Form element not found: ${name}`);
+                    return '';
+                }
+                return element.value.trim ? element.value.trim() : element.value;
+            };
+            
+            // Collect all form data including from hidden sections
+            const data = {
+                firstName: getFormValue('firstName'),
+                lastName: getFormValue('lastName'),
+                email: getFormValue('email'),
+                phone: getFormValue('phone'),
+                password: form.querySelector('input[name="password"]').value,
+                confirmPassword: form.querySelector('input[name="confirmPassword"]').value,
+                street: getFormValue('street'),
+                city: getFormValue('city'),
+                state: getFormValue('state'),
+                pincode: getFormValue('pincode'),
+                monthlyIncome: parseFloat(getFormValue('monthlyIncome')),
+                occupation: getFormValue('occupation'),
+                employmentType: getFormValue('employmentType', true)
+            };
+
+            // Debug: Log the data being sent
+            console.log('Registration data:', data);
+            console.log('Address fields:', {
+                street: data.street,
+                city: data.city,
+                state: data.state,
+                pincode: data.pincode
+            });
+
+            // Validate that address fields are not empty
+            if (!data.street || !data.city || !data.state || !data.pincode) {
+                document.getElementById('errorMessage').textContent = 'Please fill in all address fields';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+                console.error('Address validation failed:', { street: data.street, city: data.city, state: data.state, pincode: data.pincode });
+                return;
+            }
 
             try {
                 const response = await fetch('/api/auth/customer/register', {
@@ -306,18 +415,39 @@
                     body: JSON.stringify(data)
                 });
 
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+
                 const result = await response.json();
 
-                if (result.success) {
+                console.log('Server response:', result);
+                console.log('Response status code:', response.status);
+
+                if (response.ok && result.success) {
+                    console.log('✓ Registration successful!');
                     localStorage.setItem('token', result.token);
                     localStorage.setItem('user', JSON.stringify(result.customer));
-                    alert('Account created successfully!');
+                    alert('Account created successfully! You will be redirected to your dashboard.');
                     window.location.href = '/customer/dashboard';
                 } else {
-                    document.getElementById('errorMessage').textContent = result.message || 'Registration failed';
+                    let errorMsg = result.message || 'Registration failed. Please try again.';
+                    if (result.errors && result.errors.length > 0) {
+                        const errorDetails = result.errors.map(e => `${e.param || ''}: ${e.msg}`).join(', ');
+                        errorMsg += ' (' + errorDetails + ')';
+                    }
+                    console.error('❌ Registration error:', errorMsg);
+                    document.getElementById('errorMessage').textContent = errorMsg;
+                    console.error('Full error response:', result);
                 }
             } catch (error) {
-                document.getElementById('errorMessage').textContent = 'Network error. Please try again.';
+                console.error('❌ Network/Parse error:', error);
+                console.error('Error details:', error.message);
+                console.error('Error stack:', error.stack);
+                document.getElementById('errorMessage').textContent = 'Network error: ' + error.message + '. Please check your connection and try again.';
+            } finally {
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
             }
         });
     </script>
