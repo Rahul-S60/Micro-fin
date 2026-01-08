@@ -104,7 +104,7 @@
 
                     <span class="form-error block" id="step1Error"></span>
 
-                    <button type="button" class="btn btn-primary w-full" onclick="nextStep(1)">
+                    <button type="button" id="btnContinueToAddress" class="btn btn-primary w-full" onclick="nextStep(1)">
                         Continue to Address
                     </button>
                 </div>
@@ -160,10 +160,10 @@
                     </div>
                     <span class="form-error block" id="step2Error"></span>
                     <div class="flex gap-4">
-                        <button type="button" class="btn btn-secondary w-1/2" onclick="prevStep(2)">
+                        <button type="button" id="btnBackToPersonal" class="btn btn-secondary w-1/2" onclick="prevStep(2)">
                             Back
                         </button>
-                        <button type="button" class="btn btn-primary w-1/2" onclick="nextStep(2)">
+                        <button type="button" id="btnContinueToFinancial" class="btn btn-primary w-1/2" onclick="nextStep(2)">
                             Continue to Financial
                         </button>
                     </div>
@@ -218,7 +218,7 @@
                     <span class="form-error block" id="errorMessage"></span>
 
                     <div class="flex gap-4">
-                        <button type="button" class="btn btn-secondary w-1/2" onclick="prevStep(3)">
+                        <button type="button" id="btnBackToAddress" class="btn btn-secondary w-1/2" onclick="prevStep(3)">
                             Back
                         </button>
                         <button type="submit" class="btn btn-primary w-1/2">
@@ -239,6 +239,35 @@
     </div>
 
     <script>
+        // Ensure step navigation works even if inline handlers are blocked
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnContinueToAddress = document.getElementById('btnContinueToAddress');
+            const btnBackToPersonal = document.getElementById('btnBackToPersonal');
+            const btnContinueToFinancial = document.getElementById('btnContinueToFinancial');
+            const btnBackToAddress = document.getElementById('btnBackToAddress');
+
+            if (btnContinueToAddress) {
+                btnContinueToAddress.addEventListener('click', () => {
+                    try { nextStep(1); } catch (e) { console.error('Failed to go to address step:', e); }
+                });
+            }
+            if (btnBackToPersonal) {
+                btnBackToPersonal.addEventListener('click', () => {
+                    try { prevStep(2); } catch (e) { console.error('Failed to go back to personal step:', e); }
+                });
+            }
+            if (btnContinueToFinancial) {
+                btnContinueToFinancial.addEventListener('click', () => {
+                    try { nextStep(2); } catch (e) { console.error('Failed to go to financial step:', e); }
+                });
+            }
+            if (btnBackToAddress) {
+                btnBackToAddress.addEventListener('click', () => {
+                    try { prevStep(3); } catch (e) { console.error('Failed to go back to address step:', e); }
+                });
+            }
+        });
+
         function nextStep(currentStep) {
             // Clear previous error messages
             const errorElement = document.getElementById(`step${currentStep}Error`);

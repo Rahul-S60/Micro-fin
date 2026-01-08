@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+$env:NODE_ENV="development"
+node c:\\Users\\rahul\\Desktop\\Micro-fin\\micro-finance-system\\server\\server.js<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -102,8 +103,8 @@
 
                 <span class="form-error block text-center" id="generalError"></span>
 
-                <button type="submit" class="btn btn-primary w-full py-3 mt-2 flex items-center justify-center gap-2.5 text-base font-semibold bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-xl hover:shadow-lg hover:shadow-indigo-200 transition-all duration-300 transform hover:-translate-y-1">
-                    <i class="fas fa-sign-in-alt"></i> Sign In to Dashboard
+                <button type="submit" id="submitBtn" class="btn btn-primary w-full py-3 mt-2 flex items-center justify-center gap-2.5 text-base font-semibold bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-xl hover:shadow-lg hover:shadow-indigo-200 transition-all duration-300 transform hover:-translate-y-1">
+                    <i class="fas fa-sign-in-alt"></i> <span id="submitText">Sign In to Dashboard</span>
                 </button>
 
                 <!-- Forgot Password Link -->
@@ -156,15 +157,27 @@
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const email = document.querySelector('input[name="email"]').value;
+            const email = document.querySelector('input[name="email"]').value.trim();
             const password = document.querySelector('input[name="password"]').value;
+            const errorElement = document.getElementById('generalError');
+            const submitBtn = document.getElementById('submitBtn');
+            const submitText = document.getElementById('submitText');
+
+            // Validate inputs
+            if (!email || !password) {
+                errorElement.textContent = 'Please enter email and password';
+                return;
+            }
 
             // Clear previous errors
-            document.getElementById('generalError').textContent = '';
-            document.getElementById('submitText').classList.add('hidden');
-            document.getElementById('submitLoader').classList.remove('hidden');
+            errorElement.textContent = '';
+            submitBtn.disabled = true;
+            const originalText = submitText.innerHTML;
+            submitText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
 
             try {
+                console.log('Attempting login with email:', email);
+                
                 const response = await fetch('/api/auth/customer/login', {
                     method: 'POST',
                     headers: {
@@ -173,20 +186,26 @@
                     body: JSON.stringify({ email, password })
                 });
 
+                console.log('Response status:', response.status);
                 const data = await response.json();
+                console.log('Response data:', data);
 
-                if (data.success) {
+                if (response.ok && data.success) {
+                    console.log('✓ Login successful');
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.customer));
                     window.location.href = '/customer/dashboard';
                 } else {
-                    document.getElementById('generalError').textContent = data.message || 'Login failed';
+                    const errorMsg = data.message || 'Login failed. Please check your credentials.';
+                    console.error('❌ Login error:', errorMsg);
+                    errorElement.textContent = errorMsg;
                 }
             } catch (error) {
-                document.getElementById('generalError').textContent = 'Network error. Please try again.';
+                console.error('❌ Network error:', error);
+                errorElement.textContent = 'Network error. Please check your connection and try again.';
             } finally {
-                document.getElementById('submitText').classList.remove('hidden');
-                document.getElementById('submitLoader').classList.add('hidden');
+                submitBtn.disabled = false;
+                submitText.innerHTML = originalText;
             }
         });
     </script>
