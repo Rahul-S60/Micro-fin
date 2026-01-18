@@ -85,6 +85,22 @@ const adminSchema = new mongoose.Schema(
       required: true,
     },
 
+    // Password Reset
+    resetToken: {
+      type: String,
+      default: null,
+      select: false,
+    },
+    resetTokenExpiry: {
+      type: Date,
+      default: null,
+      select: false,
+    },
+    passwordChangedAt: {
+      type: Date,
+      default: null,
+    },
+
     // Activity Tracking
     lastLoginAt: {
       type: Date,
@@ -168,6 +184,10 @@ adminSchema.pre('save', async function (next) {
   }
 
   try {
+    // Update password changed timestamp only if password is being modified (not on initial creation)
+    if (!this.isNew) {
+      this.passwordChangedAt = Date.now();
+    }
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
     next();
@@ -225,6 +245,28 @@ adminSchema.methods.resetLoginAttempts = async function () {
     $set: { loginAttempts: 0 },
     $unset: { lockUntil: 1 },
   });
+};
+
+/**
+ * Instance Method: Generate password reset token
+ * Creates a unique reset token and sets expiry time (30 minutes)
+ * @returns {string} - Reset token
+ */
+adminSchema.methods.generateResetToken = function () {
+  const crypto = require('crypto');
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  this.resetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+  this.resetTokenExpiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+  return resetToken;
+};
+
+/**
+ * Instance Method: Clear reset token
+ * Used after password reset is successful
+ */
+adminSchema.methods.clearResetToken = function () {
+  this.resetToken = null;
+  this.resetTokenExpiry = null;
 };
 
 module.exports = mongoose.model('Admin', adminSchema);

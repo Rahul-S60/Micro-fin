@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/feedback.css">
 </head>
 <body class="page-bg">
     <!-- Mobile Menu Button -->
@@ -222,21 +223,103 @@
 
                     // Load recent applications
                     if (data.data.recentApplications && data.data.recentApplications.length > 0) {
-                        const applicationsHtml = data.data.recentApplications.map(app => `
+                        const applicationsHtml = data.data.recentApplications.map(app => {
+                            const isPending = app.status === 'pending' || app.status === 'under_review';
+                            const isApproved = app.status === 'approved';
+                            const actions = `
+                                ${isPending ? `<button class="btn btn-primary btn-sm mr-2" onclick="approveApplication('${app._id}')"><i class='fas fa-check'></i> Approve</button>` : ''}
+                                ${isPending ? `<button class="btn btn-danger btn-sm mr-2" onclick="rejectApplication('${app._id}')"><i class='fas fa-times'></i> Reject</button>` : ''}
+                                ${isApproved ? `<button class="btn btn-light btn-sm" onclick="activateApplication('${app._id}')"><i class='fas fa-play'></i> Activate</button>` : ''}
+                            `;
+                            return `
                             <tr>
-                                <td>${app.applicationNumber}</td>
+                                <td>${app.applicationNumber || app._id}</td>
                                 <td>${app.customerId.firstName} ${app.customerId.lastName}</td>
                                 <td>₹${app.loanAmount.toLocaleString()}</td>
-                                <td><span class="badge badge-${app.status === 'pending' ? 'pending' : app.status === 'approved' ? 'approved' : 'rejected'}">${app.status}</span></td>
+                                <td><span class="badge badge-${app.status === 'pending' ? 'pending' : app.status === 'approved' ? 'approved' : app.status === 'rejected' ? 'rejected' : 'pending'}">${app.status}</span></td>
                                 <td>${new Date(app.createdAt).toLocaleDateString()}</td>
-                                <td><a href="#" class="text-blue-600 hover:text-blue-800">Review</a></td>
-                            </tr>
-                        `).join('');
+                                <td>${actions || '<span class="text-gray-400">No actions</span>'}</td>
+                            </tr>`;
+                        }).join('');
                         document.getElementById('applicationsTable').innerHTML = applicationsHtml;
                     }
                 }
             } catch (error) {
                 console.error('Error loading dashboard:', error);
+            }
+        }
+
+        async function approveApplication(id) {
+            if (!confirm('Approve this application?')) return;
+            const loadingToast = typeof notificationManager !== 'undefined' ? notificationManager.loading('Approving', 'Processing approval...') : null;
+            try {
+                const res = await fetch(`/api/admin/application/${id}/approve`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ remarks: 'Approved via dashboard' })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    if (loadingToast && typeof notificationManager !== 'undefined') loadingToast.update({ type: 'success', title: 'Approved', message: result.message });
+                    if (result.nextSteps) showNotification(result.nextSteps, 'info', 'Next steps');
+                    loadDashboard();
+                } else {
+                    if (loadingToast && typeof notificationManager !== 'undefined') loadingToast.update({ type: 'error', title: 'Failed', message: result.message || 'Failed to approve' });
+                    showNotification(result.message || 'Failed to approve', 'error', 'Approval Error');
+                }
+            } catch (e) {
+                console.error(e);
+                showNotification('Network or server error', 'error', 'Approval Error');
+            }
+        }
+
+        async function rejectApplication(id) {
+            const reason = prompt('Enter rejection reason (min 5 characters):');
+            if (!reason || reason.trim().length < 5) return;
+            const loadingToast = typeof notificationManager !== 'undefined' ? notificationManager.loading('Rejecting', 'Processing rejection...') : null;
+            try {
+                const res = await fetch(`/api/admin/application/${id}/reject`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ reason })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    if (loadingToast && typeof notificationManager !== 'undefined') loadingToast.update({ type: 'warning', title: 'Rejected', message: result.message });
+                    if (result.rejectionReasons && result.rejectionReasons.length) {
+                        showNotification(result.rejectionReasons.join('\n'), 'info', 'Reasons recorded');
+                    }
+                    loadDashboard();
+                } else {
+                    if (loadingToast && typeof notificationManager !== 'undefined') loadingToast.update({ type: 'error', title: 'Failed', message: result.message || 'Failed to reject' });
+                    showNotification(result.message || 'Failed to reject', 'error', 'Rejection Error');
+                }
+            } catch (e) {
+                console.error(e);
+                showNotification('Network or server error', 'error', 'Rejection Error');
+            }
+        }
+
+        async function activateApplication(id) {
+            if (!confirm('Activate this approved loan?')) return;
+            const loadingToast = typeof notificationManager !== 'undefined' ? notificationManager.loading('Activating', 'Activating loan...') : null;
+            try {
+                const res = await fetch(`/api/admin/application/${id}/activate`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result = await res.json();
+                if (result.success) {
+                    if (loadingToast && typeof notificationManager !== 'undefined') loadingToast.update({ type: 'success', title: 'Activated', message: result.message });
+                    if (result.nextSteps) showNotification(result.nextSteps, 'info', 'Next steps');
+                    loadDashboard();
+                } else {
+                    if (loadingToast && typeof notificationManager !== 'undefined') loadingToast.update({ type: 'error', title: 'Failed', message: result.message || 'Failed to activate' });
+                    showNotification(result.message || 'Failed to activate', 'error', 'Activation Error');
+                }
+            } catch (e) {
+                console.error(e);
+                showNotification('Network or server error', 'error', 'Activation Error');
             }
         }
 
@@ -268,5 +351,7 @@
             });
         }
     </script>
+    <script src="/js/notifications.js"></script>
+    <script src="/js/main.js"></script>
 </body>
 </html>

@@ -298,8 +298,14 @@ const approveLoanApplication = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Loan application approved successfully',
+      message: `Loan application ${application.applicationNumber} approved successfully. Customer notification pending.`,
       data: application,
+      customerNotified: false,
+      notificationDetails: {
+        method: 'pending',
+        message: 'Configure email/SMS to notify customer of approval',
+      },
+      nextSteps: ['Activate the loan to start the EMI schedule', 'Complete customer KYC if not already done'],
     });
   } catch (error) {
     res.status(500).json({
@@ -345,10 +351,17 @@ const rejectLoanApplication = async (req, res) => {
     application.rejectLoan(reason);
     await application.save();
 
+    const reapplyDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
     res.status(200).json({
       success: true,
-      message: 'Loan application rejected',
+      message: `Loan application ${application.applicationNumber} rejected. Rejection reason recorded.`,
       data: application,
+      customerNotified: false,
+      rejectionReasons: [reason],
+      canReapply: true,
+      reapplyEligibleDate: reapplyDate,
+      nextSteps: ['Notify customer of rejection', 'Send reapply instructions for 30 days later'],
     });
   } catch (error) {
     res.status(500).json({
@@ -387,8 +400,10 @@ const activateLoan = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Loan activated successfully',
+      message: `Loan ${application.applicationNumber} activated successfully. EMI of ₹${(application.emiAmount || 0).toLocaleString()} scheduled.`,
       data: application,
+      customerNotified: false,
+      nextSteps: ['Send repayment schedule to customer', 'Enable EMI payment gateway', 'Send welcome message with first EMI date'],
     });
   } catch (error) {
     res.status(500).json({

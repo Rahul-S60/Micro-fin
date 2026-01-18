@@ -113,6 +113,18 @@ app.get('/customer/register', (req, res) => {
   });
 });
 
+app.get('/customer/forgot-password', (req, res) => {
+  res.render('customer/forgot-password', {
+    title: 'Forgot Password - Customer',
+  });
+});
+
+app.get('/customer/reset-password', (req, res) => {
+  res.render('customer/reset-password', {
+    title: 'Reset Password - Customer',
+  });
+});
+
 app.get('/customer/dashboard', (req, res) => {
   res.render('customer/dashboard', {
     title: 'Customer Dashboard',
@@ -123,6 +135,18 @@ app.get('/customer/dashboard', (req, res) => {
 app.get('/admin/login', (req, res) => {
   res.render('admin/login', {
     title: 'Admin Login',
+  });
+});
+
+app.get('/admin/forgot-password', (req, res) => {
+  res.render('admin/forgot-password', {
+    title: 'Forgot Password - Admin',
+  });
+});
+
+app.get('/admin/reset-password', (req, res) => {
+  res.render('admin/reset-password', {
+    title: 'Reset Password - Admin',
   });
 });
 

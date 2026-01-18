@@ -111,6 +111,62 @@ router.post(
 );
 
 /**
+ * POST /api/auth/customer/forgot-password
+ * Request password reset for customer
+ * Public endpoint
+ */
+router.post(
+  '/customer/forgot-password',
+  [body('email').isEmail().withMessage('Please provide valid email')],
+  authController.customerForgotPassword
+);
+
+/**
+ * POST /api/auth/customer/reset-password
+ * Reset customer password using token
+ * Public endpoint
+ */
+router.post(
+  '/customer/reset-password',
+  [
+    body('token').notEmpty().withMessage('Reset token is required'),
+    body('password')
+      .isLength({ min: 6 })
+      .withMessage('Password must be at least 6 characters'),
+    body('confirmPassword').notEmpty().withMessage('Confirm password is required'),
+  ],
+  authController.customerResetPassword
+);
+
+/**
+ * POST /api/auth/admin/forgot-password
+ * Request password reset for admin
+ * Public endpoint
+ */
+router.post(
+  '/admin/forgot-password',
+  [body('email').isEmail().withMessage('Please provide valid email')],
+  authController.adminForgotPassword
+);
+
+/**
+ * POST /api/auth/admin/reset-password
+ * Reset admin password using token
+ * Public endpoint
+ */
+router.post(
+  '/admin/reset-password',
+  [
+    body('token').notEmpty().withMessage('Reset token is required'),
+    body('password')
+      .isLength({ min: 6 })
+      .withMessage('Password must be at least 6 characters'),
+    body('confirmPassword').notEmpty().withMessage('Confirm password is required'),
+  ],
+  authController.adminResetPassword
+);
+
+/**
  * GET /api/auth/verify
  * Verify JWT token
  * Protected endpoint

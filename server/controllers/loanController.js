@@ -6,6 +6,7 @@
 const Loan = require('../models/Loan');
 const LoanApplication = require('../models/LoanApplication');
 const Customer = require('../models/Customer');
+const notificationMessages = require('../utils/notificationMessages');
 
 /**
  * GET /api/loans
@@ -234,11 +235,27 @@ const applyForLoan = async (req, res) => {
     loanApplication.calculateEMI();
     await loanApplication.save();
 
+    const reviewETA = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
+    const kycRequired = customer.kycStatus !== 'verified';
+
+    // Use message templates
+    const msgTemplate = notificationMessages.loan.application.submitted;
+    const messageText = msgTemplate.message
+      .replace('{amount}', `₹${loanAmount.toLocaleString()}`);
+
     res.status(201).json({
       success: true,
-      message: 'Loan application submitted successfully',
+      message: messageText,
       applicationNumber: loanApplication.applicationNumber,
       data: loanApplication,
+      nextSteps: kycRequired
+        ? ['Complete KYC verification to speed up approval']
+        : ['We will notify you once the review is complete'],
+      reviewETA,
+      kycRequired,
+      statusText: kycRequired
+        ? 'Application submitted • KYC required'
+        : 'Application submitted • Under review',
     });
   } catch (error) {
     res.status(500).json({

@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/feedback.css">
 </head>
 <body class="page-bg">
     <!-- Mobile Menu Button -->
@@ -103,6 +104,7 @@
                     <div id="applicationsContainer" class="overflow-x-auto">
                         <p class="text-gray-600">Loading applications...</p>
                     </div>
+                    <div id="applicationTimeline" class="mt-4"></div>
                 </div>
 
                 <div class="card table-elevated">
@@ -139,6 +141,45 @@
                     </div>
                 </div>
                 
+                <!-- Dynamic Apply Form (shown when a product is selected) -->
+                <div id="applyLoanFormContainer" class="card-ghost mb-6 hidden">
+                    <h3 class="text-lg font-bold text-slate-900 mb-4">Application Details</h3>
+                    <form id="applyLoanForm" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Selected Product</label>
+                                <input type="text" id="selectedLoanName" class="form-control" disabled>
+                                <p class="text-xs text-gray-500 mt-1" id="selectedLoanMeta"></p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Loan Amount (₹)</label>
+                                <input type="number" id="applyAmount" class="form-control" min="0" required>
+                                <p class="text-xs text-gray-500 mt-1" id="amountHint"></p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Tenure (months)</label>
+                                <input type="number" id="applyTenure" class="form-control" min="1" required>
+                                <p class="text-xs text-gray-500 mt-1" id="tenureHint"></p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Purpose</label>
+                                <input type="text" id="applyPurpose" class="form-control" placeholder="e.g., Business expansion" required>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="form-error" id="applyError"></span>
+                        </div>
+                        <div class="flex gap-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Submit Application
+                            </button>
+                            <button type="button" id="cancelApplyBtn" class="btn btn-light">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
                 <div id="applyLoanContainer">
                     <p class="text-gray-600">Loading loan products...</p>
                 </div>
@@ -421,7 +462,7 @@
                                     <tr>
                                         <td>${loan.loanId?.name || 'N/A'}</td>
                                         <td>₹${loan.loanAmount?.toLocaleString()}</td>
-                                        <td><span class="badge badge-${loan.status === 'approved' ? 'success' : loan.status === 'pending' ? 'warning' : 'neutral'}">${loan.status}</span></td>
+                                        <td><span class="badge badge-${loan.status === 'approved' ? 'success' : loan.status === 'pending' ? 'warning' : loan.status === 'active' ? 'info' : 'neutral'}">${loan.status}</span></td>
                                         <td>${new Date(loan.createdAt).toLocaleDateString()}</td>
                                     </tr>
                                 `).join('')}
@@ -429,8 +470,123 @@
                         </table>
                     `;
                     document.getElementById('applicationsContainer').innerHTML = html;
+
+                    // Render extended timelines for all applications
+                    const timelineContainerHTML = data.data.map((app, idx) => {
+                        const created = new Date(app.createdAt);
+                        const status = app.status;
+                        const approvalDate = app.approvalDate ? new Date(app.approvalDate) : null;
+                        const rejectionDate = app.rejectionDate ? new Date(app.rejectionDate) : null;
+                        const activationDate = app.activatedAt ? new Date(app.activatedAt) : null;
+                        const lastUpdate = app.lastStatusUpdate ? new Date(app.lastStatusUpdate) : null;
+
+                        // Build timeline steps based on actual status
+                        const steps = [];
+                        
+                        // Step 1: Always submitted
+                        steps.push({
+                            title: 'Application Submitted',
+                            date: created.toLocaleDateString() + ' ' + created.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}),
+                            state: 'completed',
+                            icon: 'fa-paper-plane',
+                            note: `Amount: ₹${app.loanAmount?.toLocaleString()}`
+                        });
+
+                        // Step 2: Under Review (or passed)
+                        const underReviewDate = lastUpdate || (approvalDate || rejectionDate || null);
+                        steps.push({
+                            title: 'Under Review',
+                            date: status === 'pending' || status === 'under_review' ? 'In progress' : (underReviewDate ? underReviewDate.toLocaleDateString() : ''),
+                            state: status === 'pending' || status === 'under_review' ? 'current' : 'completed',
+                            icon: 'fa-magnifying-glass',
+                            note: 'Loan officer reviewing details'
+                        });
+
+                        // Step 3: Decision/Approval/Rejection
+                        if (status === 'rejected') {
+                            steps.push({
+                                title: 'Application Rejected',
+                                date: rejectionDate ? rejectionDate.toLocaleDateString() : '',
+                                state: 'completed',
+                                icon: 'fa-times-circle',
+                                note: app.rejectionReason || 'Application did not meet criteria',
+                                isError: true
+                            });
+                        } else if (status === 'approved' || status === 'active' || status === 'closed') {
+                            steps.push({
+                                title: 'Application Approved',
+                                date: approvalDate ? approvalDate.toLocaleDateString() : '',
+                                state: 'completed',
+                                icon: 'fa-check-circle',
+                                note: 'Approved by loan officer'
+                            });
+                        } else {
+                            steps.push({
+                                title: 'Awaiting Decision',
+                                date: '',
+                                state: 'pending',
+                                icon: 'fa-hourglass-end',
+                                note: 'Your application is being reviewed'
+                            });
+                        }
+
+                        // Step 4: Activation (if applicable)
+                        if (status === 'active' || status === 'closed') {
+                            steps.push({
+                                title: 'Loan Activated',
+                                date: activationDate ? activationDate.toLocaleDateString() : '',
+                                state: 'completed',
+                                icon: 'fa-play-circle',
+                                note: 'EMI schedule started'
+                            });
+                        } else if (status === 'approved') {
+                            steps.push({
+                                title: 'Ready for Activation',
+                                date: '',
+                                state: 'current',
+                                icon: 'fa-play-circle',
+                                note: 'Admin will activate your loan'
+                            });
+                        }
+
+                        // Step 5: Closed (if applicable)
+                        if (status === 'closed') {
+                            steps.push({
+                                title: 'Loan Closed',
+                                date: app.closedAt ? new Date(app.closedAt).toLocaleDateString() : '',
+                                state: 'completed',
+                                icon: 'fa-check',
+                                note: 'Repayment complete'
+                            });
+                        }
+
+                        const timelineHTML = `
+                            <div class="mb-6 ${idx > 0 ? 'mt-8 pt-6 border-t-2 border-gray-200' : ''}">
+                                <h4 class="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                                    <i class="fas fa-${app.loanId?.category === 'personal' ? 'user' : app.loanId?.category === 'business' ? 'briefcase' : 'graduation-cap'} text-indigo-600"></i>
+                                    ${app.loanId?.name || 'Loan'} - ${app.loanAmount?.toLocaleString()} ₹
+                                </h4>
+                                <div class="application-timeline">
+                                    ${steps.map(s => `
+                                        <div class="timeline-item ${s.state}${s.isError ? ' error' : ''}">
+                                            <div class="timeline-dot"><i class="fas ${s.icon}" style="color: ${s.isError ? '#ef4444' : ''}"></i></div>
+                                            <div class="timeline-content">
+                                                <h4>${s.title}</h4>
+                                                ${s.date ? `<p class="text-sm text-gray-500">${s.date}</p>` : ''}
+                                                <p class="text-gray-600 text-sm">${s.note}</p>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                        return timelineHTML;
+                    }).join('');
+
+                    document.getElementById('applicationTimeline').innerHTML = timelineContainerHTML;
                 } else {
                     document.getElementById('applicationsContainer').innerHTML = '<p class="text-gray-600 text-center py-8">No loan applications yet. Apply for your first loan!</p>';
+                    document.getElementById('applicationTimeline').innerHTML = '';
                 }
             } catch (error) {
                 console.error('Error loading applications:', error);
@@ -445,7 +601,9 @@
                 const data = await response.json();
 
                 if (data.success && data.data.length > 0) {
-                    const loansHtml = data.data.slice(0, 3).map(loan => `
+                    const microLoans = data.data.filter(l => (l.name || '').toLowerCase().includes('micro loan'));
+                    const list = (microLoans.length > 0 ? microLoans : data.data).slice(0, 6);
+                    const loansHtml = list.map(loan => `
                         <div class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
                             <div class="mb-4">
                                 <h3 class="font-bold text-lg mb-1">${loan.name}</h3>
@@ -456,6 +614,7 @@
                                 <p class="text-sm"><strong>Rate:</strong> ${loan.annualInterestRate}% p.a.</p>
                                 <p class="text-sm"><strong>Amount:</strong> ₹${loan.minAmount?.toLocaleString()} - ₹${loan.maxAmount?.toLocaleString()}</p>
                                 <p class="text-sm"><strong>Tenure:</strong> ${loan.minTenureMonths}-${loan.maxTenureMonths} months</p>
+                                <p class="text-xs text-gray-700"><strong>Eligibility:</strong> Min income ₹${(loan.minMonthlyIncome || 0).toLocaleString()} • Age ${loan.minAge || 0}-${loan.maxAge || 0} • Credit score ${loan.requiredCreditScore && loan.requiredCreditScore > 0 ? '≥ ' + loan.requiredCreditScore : 'not required'}</p>
                             </div>
                             <button class="btn btn-primary w-full" onclick="applyForLoan('${loan._id}')">
                                 <i class="fas fa-check"></i> Apply Now
@@ -477,6 +636,14 @@
             showSection('apply-loan');
             // Scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Prefill the application form with selected loan
+            if (loanId) {
+                setTimeout(() => {
+                    if (typeof startLoanApplicationFromId === 'function') {
+                        startLoanApplicationFromId(loanId);
+                    }
+                }, 300);
+            }
         }
 
         // Load My Loans section
@@ -538,6 +705,9 @@
             } catch (error) {
                 console.error('Error loading loans:', error);
                 document.getElementById('myLoansContainer').innerHTML = '<p class="text-red-600">Failed to load your loans</p>';
+                if (typeof showNotification !== 'undefined') {
+                    showNotification('Failed to load your loans', 'error', 'Load Error');
+                }
             }
         }
 
@@ -548,9 +718,12 @@
                 const data = await response.json();
 
                 if (data.success && data.data.length > 0) {
+                    // Retain available loans for form population
+                    const microLoans = data.data.filter(l => (l.name || '').toLowerCase().includes('micro loan'));
+                    window.availableLoans = microLoans.length > 0 ? microLoans : data.data;
                     const html = `
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            ${data.data.map(loan => `
+                            ${window.availableLoans.map(loan => `
                                 <div class="card-ghost hover:shadow-xl transition-all">
                                     <div class="mb-4">
                                         <h3 class="text-xl font-bold mb-2">${loan.name}</h3>
@@ -570,8 +743,17 @@
                                             <span class="text-gray-600">Tenure</span>
                                             <span class="font-bold">${loan.minTenureMonths}-${loan.maxTenureMonths} months</span>
                                         </div>
+                                        <div class="text-xs text-gray-700">
+                                            <span class="font-semibold">Eligibility:</span>
+                                            <span>Min income ₹${(loan.minMonthlyIncome || 0).toLocaleString()} • Age ${loan.minAge || 0}-${loan.maxAge || 0} • Credit score ${loan.requiredCreditScore && loan.requiredCreditScore > 0 ? '≥ ' + loan.requiredCreditScore : 'not required'}</span>
+                                        </div>
+                                        ${(loan.requirements && loan.requirements.length) ? `
+                                        <ul class="mt-2 text-xs text-gray-600 list-disc pl-5">
+                                            ${loan.requirements.slice(0,3).map(req => `<li>${req}</li>`).join('')}
+                                        </ul>
+                                        ` : ''}
                                     </div>
-                                    <button class="btn btn-primary w-full" onclick="alert('Loan application form coming soon!')">
+                                    <button class="btn btn-primary w-full" onclick="startLoanApplicationFromId('${loan._id}')">
                                         <i class="fas fa-paper-plane"></i> Apply for This Loan
                                     </button>
                                 </div>
@@ -587,6 +769,115 @@
                 document.getElementById('applyLoanContainer').innerHTML = '<p class="text-red-600">Failed to load loan products</p>';
             }
         }
+
+        // Application UI helpers
+        let selectedLoan = null;
+        function startLoanApplicationFromId(id) {
+            if (!window.availableLoans) return;
+            const loan = window.availableLoans.find(l => l._id === id);
+            if (!loan) return;
+            selectedLoan = loan;
+            // Populate form
+            const formWrap = document.getElementById('applyLoanFormContainer');
+            document.getElementById('selectedLoanName').value = `${loan.name}`;
+            document.getElementById('selectedLoanMeta').textContent = `${loan.category} • ${loan.annualInterestRate}% p.a.`;
+            const amountEl = document.getElementById('applyAmount');
+            amountEl.min = loan.minAmount;
+            amountEl.max = loan.maxAmount;
+            amountEl.value = loan.minAmount;
+            document.getElementById('amountHint').textContent = `Allowed range: ₹${loan.minAmount.toLocaleString()} - ₹${loan.maxAmount.toLocaleString()}`;
+            const tenureEl = document.getElementById('applyTenure');
+            tenureEl.min = loan.minTenureMonths;
+            tenureEl.max = loan.maxTenureMonths;
+            tenureEl.value = loan.minTenureMonths;
+            document.getElementById('tenureHint').textContent = `Allowed range: ${loan.minTenureMonths}-${loan.maxTenureMonths} months`;
+            document.getElementById('applyPurpose').value = loan.name || '';
+            document.getElementById('applyError').textContent = '';
+            formWrap.classList.remove('hidden');
+            // Scroll into view
+            formWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        document.getElementById('cancelApplyBtn').addEventListener('click', () => {
+            document.getElementById('applyLoanFormContainer').classList.add('hidden');
+            selectedLoan = null;
+        });
+
+        document.getElementById('applyLoanForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errEl = document.getElementById('applyError');
+            errEl.textContent = '';
+            if (!selectedLoan) {
+                errEl.textContent = 'Please select a loan product.';
+                return;
+            }
+            const amount = parseFloat(document.getElementById('applyAmount').value);
+            const tenure = parseInt(document.getElementById('applyTenure').value, 10);
+            const purpose = document.getElementById('applyPurpose').value.trim();
+            if (isNaN(amount) || amount < selectedLoan.minAmount || amount > selectedLoan.maxAmount) {
+                errEl.textContent = `Amount must be between ₹${selectedLoan.minAmount.toLocaleString()} and ₹${selectedLoan.maxAmount.toLocaleString()}`;
+                return;
+            }
+            if (isNaN(tenure) || tenure < selectedLoan.minTenureMonths || tenure > selectedLoan.maxTenureMonths) {
+                errEl.textContent = `Tenure must be between ${selectedLoan.minTenureMonths} and ${selectedLoan.maxTenureMonths} months`;
+                return;
+            }
+            if (purpose.length < 5) {
+                errEl.textContent = 'Purpose must be at least 5 characters.';
+                return;
+            }
+
+            const applyingToast = typeof notificationManager !== 'undefined'
+                ? notificationManager.loading('Submitting Application', 'We are submitting your application...')
+                : null;
+
+            try {
+                const res = await fetch('/api/loans/apply', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        loanId: selectedLoan._id,
+                        loanAmount: amount,
+                        tenureMonths: tenure,
+                        purpose
+                    })
+                });
+                const result = await res.json();
+                if (applyingToast && typeof notificationManager !== 'undefined') applyingToast.update({ type: 'success', title: 'Submitted', message: result.message || 'Application submitted.' });
+
+                if (result.success) {
+                    showNotification(result.message || 'Application submitted successfully', 'success', 'Application Submitted');
+                    if (result.reviewETA || (result.nextSteps && result.nextSteps.length)) {
+                        const info = [
+                            result.reviewETA ? `Decision ETA: ${result.reviewETA}` : null,
+                            ...(Array.isArray(result.nextSteps) ? result.nextSteps.map(s => `• ${s}`) : [])
+                        ].filter(Boolean).join('\n');
+                        if (info) showNotification(info, 'info', 'What happens next');
+                    }
+                    if (result.kycRequired) {
+                        showNotification('Complete KYC to speed up review', 'warning', 'KYC Required');
+                    }
+                    // Refresh dashboard and recent applications
+                    loadDashboard();
+                    loadRecentApplications();
+                    loadMyLoans();
+                    // Hide form and navigate to Dashboard
+                    document.getElementById('applyLoanFormContainer').classList.add('hidden');
+                    selectedLoan = null;
+                    showSection('dashboard');
+                } else {
+                    errEl.textContent = result.message || 'Failed to submit application';
+                    showNotification(result.message || 'Failed to submit application', 'error', 'Submission Failed');
+                }
+            } catch (error) {
+                console.error('Apply error:', error);
+                errEl.textContent = 'Failed to submit application. Please try again.';
+                showNotification('Network or server error', 'error', 'Submission Failed');
+            }
+        });
 
         // Load KYC status
         async function loadKYCStatus() {
@@ -615,6 +906,9 @@
                                 <p class="text-sm text-gray-600">You can now apply for loans</p>
                             </div>
                         `;
+                        if (typeof showNotification !== 'undefined') {
+                            showNotification('KYC verified successfully', 'success', 'KYC Verified');
+                        }
                     }
                 }
             } catch (error) {
@@ -646,10 +940,15 @@
 
                 if (result.success) {
                     document.getElementById('kycError').textContent = '';
-                    alert('KYC submitted successfully! Your documents are under review.');
+                    if (typeof showNotification !== 'undefined') {
+                        showNotification('KYC submitted successfully! Your documents are under review.', 'success', 'KYC Submitted');
+                    }
                     loadKYCStatus();
                 } else {
                     document.getElementById('kycError').textContent = result.message;
+                    if (typeof showNotification !== 'undefined') {
+                        showNotification(result.message || 'Failed to submit KYC', 'error', 'KYC Error');
+                    }
                 }
             } catch (error) {
                 console.error('Error submitting KYC:', error);
@@ -723,8 +1022,14 @@
                     setTimeout(() => {
                         document.getElementById('profileSuccess').classList.add('hidden');
                     }, 3000);
+                    if (typeof showNotification !== 'undefined') {
+                        showNotification('Profile updated successfully', 'success', 'Profile Updated');
+                    }
                 } else {
                     document.getElementById('profileError').textContent = result.message;
+                    if (typeof showNotification !== 'undefined') {
+                        showNotification(result.message || 'Failed to update profile', 'error', 'Update Failed');
+                    }
                 }
             } catch (error) {
                 console.error('Error updating profile:', error);
@@ -761,5 +1066,7 @@
             });
         }
     </script>
+    <script src="/js/notifications.js"></script>
+    <script src="/js/main.js"></script>
 </body>
 </html>

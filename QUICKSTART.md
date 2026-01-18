@@ -2,41 +2,174 @@
 
 ## Prerequisites
 - Node.js v14+ installed
-- MongoDB running locally or Atlas connection string
-- Postman (for API testing)
+- MongoDB running (local or Atlas)
+- npm or yarn
 
-## Setup Steps
+## 1️⃣ Install & Setup
 
-### 1. Install Dependencies
 ```bash
+# Install dependencies
 npm install
-```
 
-### 2. Configure Environment
-Edit `.env` file:
-```env
-PORT=5000
-NODE_ENV=development
-MONGODB_URI=mongodb://localhost:27017/micro-finance-system
-JWT_SECRET=your_super_secret_key_here
-JWT_EXPIRY=7d
-```
+# Configure MongoDB (edit .env if needed)
+# Default: mongodb://localhost:27017/micro-finance-system
 
-### 3. Start MongoDB (if local)
-```bash
+# Start MongoDB (if running locally)
 mongod
 ```
 
-### 4. Start Server
+## 2️⃣ Seed Database (Required)
+
 ```bash
-# Development mode with auto-reload
+# Creates default admin account and loan products
+node server/utils/seedAdmin.js
+```
+
+**Default Admin Login:**
+- Email: `admin@microfinance.com`
+- Password: `Admin@123456`
+
+## 3️⃣ Start Server
+
+```bash
+# Development mode (with auto-reload)
 npm run dev
 
-# Or production mode
+# Production mode
 npm start
 ```
 
-Server runs on `http://localhost:5000`
+Server runs on: **http://localhost:5000**
+
+---
+
+## 🧪 Quick Test
+
+### 1. Home Page
+```
+http://localhost:5000
+```
+You should see the Micro Finance homepage with Customer/Admin login options.
+
+### 2. Create Test Account
+- Click "Customer Login" → "Register Now"
+- Fill form with:
+  - Name, Email, Phone (10 digits)
+  - Password (min 6 chars)
+  - Address & Income details
+- Click "Register" → See success toast
+
+### 3. Login & Apply
+- Login with credentials from registration
+- Click "Apply for Loan" tab
+- Select loan product & amount
+- Submit → See ETA & next steps
+
+### 4. Admin Actions
+- Login as admin (admin@microfinance.com / Admin@123456)
+- See pending applications
+- Click Approve/Reject/Activate buttons
+- Observe toast notifications with guidance
+
+---
+
+## ✨ Key Features Working
+
+✅ **Real-time Form Validation**
+- Email availability check
+- Phone number validation (10 digits)
+- Password strength meter
+- Visual feedback (red/green)
+
+✅ **Toast Notifications**
+- Success/error messages
+- Auto-close after 4 seconds
+- Icon & color coded
+
+✅ **Loan Application**
+- Amount slider with min/max limits
+- Tenure selection (3-60 months)
+- Success response with:
+  - Review ETA (when review will complete)
+  - Next steps (clear action items)
+  - KYC requirement flag
+
+✅ **Application Timeline**
+- Shows ALL applications with multi-step visualization
+- States: Submitted → Under Review → Decision → Active → Closed
+- Color coded progress
+
+✅ **Admin Dashboard**
+- View pending applications
+- Inline Approve/Reject/Activate buttons
+- Confirmations before actions
+- Success toasts with next steps
+
+---
+
+## 📁 Project Structure
+
+```
+server/
+  controllers/          → Business logic
+  models/             → Database schemas
+  routes/             → API endpoints
+  middleware/         → Auth, error handling
+  utils/              → Helper functions
+  config/             → Database config
+
+public/
+  js/
+    main.js            → Utility functions
+    notifications.js   → Toast system (500+ lines)
+    registration-validation.js → Form validation
+  css/
+    feedback.css       → Notification styles (450+ lines)
+    style.css          → Base styles
+
+views/
+  customer/            → Customer pages
+  admin/              → Admin pages
+  shared/             → Shared components
+```
+
+---
+
+## 🔧 Troubleshooting
+
+### Server won't start
+```bash
+# Check if port 5000 is in use
+netstat -ano | findstr :5000
+
+# Kill process if needed
+taskkill /PID <PID> /F
+```
+
+### MongoDB connection failed
+- Ensure MongoDB is running: `mongod`
+- Check connection string in `.env`
+- Verify database exists: `mongo micro-finance-system`
+
+### Admin account not found
+```bash
+# Re-run seeder
+node server/utils/seedAdmin.js
+```
+
+### Forms not validating in real-time
+- Check browser console (F12) for errors
+- Ensure `registration-validation.js` is loaded
+- Check Network tab for API responses
+
+---
+
+## 📚 Documentation
+
+- **[README.md](README.md)** - Project overview
+- **[IMPROVEMENTS_SUMMARY.md](IMPROVEMENTS_SUMMARY.md)** - Feature summary
+- **[FLOW_VERIFICATION_GUIDE.md](FLOW_VERIFICATION_GUIDE.md)** - Manual testing steps
+- **[PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)** - Detailed architecture
 
 ---
 
@@ -44,7 +177,7 @@ Server runs on `http://localhost:5000`
 
 ### 1. Access Landing Page
 ```
-http://localhost:5000/
+http://localhost:5000
 ```
 
 ### 2. Customer Flow
