@@ -23,8 +23,9 @@ const isPlaceholder = (value) => {
   return placeholders.some(ph => value.includes(ph) || value.includes(ph.toLowerCase()));
 };
 
+// Support both EMAIL_PASSWORD and APP_PASSWORD env vars
 const emailUser = process.env.EMAIL_USER;
-const emailPassword = process.env.EMAIL_PASSWORD;
+const emailPassword = process.env.EMAIL_PASSWORD || process.env.APP_PASSWORD;
 const hasValidCredentials = emailUser && emailPassword && !isPlaceholder(emailUser) && !isPlaceholder(emailPassword);
 
 // ============================================
@@ -39,9 +40,15 @@ let emailConfigStatus = {
 };
 
 if (hasValidCredentials) {
-  // Use Gmail with real credentials
+  // Use Gmail with real credentials (explicit SMTP settings)
+  const host = process.env.EMAIL_HOST || 'smtp.gmail.com';
+  const port = Number(process.env.EMAIL_PORT || 465);
+  const secure = process.env.EMAIL_SECURE ? process.env.EMAIL_SECURE === 'true' : port === 465;
+
   transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host,
+    port,
+    secure,
     auth: {
       user: emailUser,
       pass: emailPassword,
@@ -62,9 +69,31 @@ if (hasValidCredentials) {
       console.log('\n🔧 Quick Fixes:');
       console.log('   1. Generate NEW App Password at: https://myaccount.google.com/apppasswords');
       console.log('   2. Copy EXACTLY as shown (16 characters, may have spaces)');
-      console.log('   3. Remove ALL spaces: xayvpxjupqjqzhlu');
+      console.log('   3. Remove ALL spaces from the app password before saving in .env');
       console.log('   4. Update .env with EMAIL_USER and EMAIL_PASSWORD');
       console.log('   5. Restart server: npm run dev\n');
+
+      // Automatic fallback to Ethereal for testing
+      nodemailer.createTestAccount().then((account) => {
+        transporter = nodemailer.createTransport({
+          host: 'smtp.ethereal.email',
+          port: 587,
+          secure: false,
+          auth: {
+            user: account.user,
+            pass: account.pass,
+          },
+        });
+        emailConfigStatus = {
+          configured: false,
+          provider: 'Ethereal (Fallback)',
+          reason: 'Gmail auth failed; using Ethereal for email preview only.'
+        };
+        console.log('🔁 Switched to Ethereal (TEST MODE - Emails not actually sent)');
+        console.log('   Preview URLs will be shown for sent emails.');
+      }).catch((e) => {
+        console.error('❌ Failed to initialize Ethereal fallback:', e.message);
+      });
     } else {
       console.log('✅ Gmail connection verified - Ready to send emails!');
     }
@@ -174,29 +203,16 @@ const sendCustomerPasswordResetEmail = async (email, resetToken, port = 5000) =>
       `
     };
 
-    if (hasValidCredentials) {
-      // Send real email
-      const info = await transporter.sendMail(mailOptions);
-      console.log('✅ Password reset email sent to', email);
-      console.log('📨 Message ID:', info.messageId);
-      return { success: true, messageId: info.messageId, delivered: true };
-    } else {
-      // Test mode - show preview link in console
-      console.log('\n⚠️  EMAIL DELIVERY TESTING MODE');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('📧 TEST PASSWORD RESET EMAIL');
-      console.log('To: ' + email);
-      console.log('Subject: Password Reset Request - MicroFinance System');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('\n🔗 RESET LINK:');
-      console.log(resetLink);
-      console.log('\n📌 To send real emails:');
-      console.log('1. Get Gmail App Password');
-      console.log('2. Update .env: EMAIL_USER and EMAIL_PASSWORD');
-      console.log('3. Restart server: npm run dev');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-      return { success: true, delivered: false, testMode: true, resetLink };
+    // Attempt to send via current transporter (Gmail if verified, otherwise Ethereal fallback)
+    const info = await transporter.sendMail(mailOptions);
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    if (previewUrl) {
+      console.log('🔎 Ethereal Preview URL:', previewUrl);
+      return { success: true, delivered: false, testMode: true, previewUrl, resetLink };
     }
+    console.log('✅ Password reset email sent to', email);
+    console.log('📨 Message ID:', info.messageId);
+    return { success: true, messageId: info.messageId, delivered: true };
   } catch (error) {
     console.error('❌ Error in password reset email:', error.message);
     console.log('📌 Configuration Status:', emailConfigStatus);
@@ -277,29 +293,16 @@ const sendAdminPasswordResetEmail = async (email, resetToken, port = 5000) => {
       `
     };
 
-    if (hasValidCredentials) {
-      // Send real email
-      const info = await transporter.sendMail(mailOptions);
-      console.log('✅ Admin password reset email sent to', email);
-      console.log('📨 Message ID:', info.messageId);
-      return { success: true, messageId: info.messageId, delivered: true };
-    } else {
-      // Test mode - show preview link in console
-      console.log('\n⚠️  EMAIL DELIVERY TESTING MODE');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('📧 TEST ADMIN PASSWORD RESET EMAIL');
-      console.log('To: ' + email);
-      console.log('Subject: Admin Password Reset Request - MicroFinance System');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('\n🔗 RESET LINK:');
-      console.log(resetLink);
-      console.log('\n📌 To send real emails:');
-      console.log('1. Get Gmail App Password');
-      console.log('2. Update .env: EMAIL_USER and EMAIL_PASSWORD');
-      console.log('3. Restart server: npm run dev');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-      return { success: true, delivered: false, testMode: true, resetLink };
+    // Attempt to send via current transporter (Gmail if verified, otherwise Ethereal fallback)
+    const info = await transporter.sendMail(mailOptions);
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    if (previewUrl) {
+      console.log('🔎 Ethereal Preview URL (Admin):', previewUrl);
+      return { success: true, delivered: false, testMode: true, previewUrl, resetLink };
     }
+    console.log('✅ Admin password reset email sent to', email);
+    console.log('📨 Message ID:', info.messageId);
+    return { success: true, messageId: info.messageId, delivered: true };
   } catch (error) {
     console.error('❌ Error in admin password reset email:', error.message);
     console.log('📌 Configuration Status:', emailConfigStatus);
