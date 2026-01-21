@@ -36,35 +36,41 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">First Name</label>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">First Name <span class="text-red-500">*</span></label>
                             <input 
                                 type="text" 
                                 name="firstName" 
                                 class="form-control"
-                                placeholder="John"
+                                placeholder="Enter first name (letters only)"
+                                pattern="[A-Za-z ]{2,50}"
+                                title="First name should contain only letters (2-50 characters)"
                                 required
                             >
+                            <p class="helper-text">Only letters and spaces allowed</p>
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Last Name</label>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Last Name <span class="text-red-500">*</span></label>
                             <input 
                                 type="text" 
                                 name="lastName" 
                                 class="form-control"
-                                placeholder="Doe"
+                                placeholder="Enter last name (letters only)"
+                                pattern="[A-Za-z ]{2,50}"
+                                title="Last name should contain only letters (2-50 characters)"
                                 required
                             >
+                            <p class="helper-text">Only letters and spaces allowed</p>
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Email Address</label>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Email Address <span class="text-red-500">*</span></label>
                         <input 
                             type="email" 
                             name="email" 
                             id="email"
                             class="form-control"
-                            placeholder="john@example.com"
+                            placeholder="Enter valid email (e.g., john@example.com)"
                             required
                         >
                         <div class="validation-feedback hidden" id="emailFeedback">
@@ -75,14 +81,16 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Phone Number</label>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Phone Number <span class="text-red-500">*</span></label>
                         <input 
                             type="tel" 
                             name="phone" 
                             id="phone"
                             class="form-control"
-                            placeholder="9876543210"
-                            pattern="[0-9]{10}"
+                            placeholder="Enter 10-digit mobile number (e.g., 9876543210)"
+                            pattern="[6-9][0-9]{9}"
+                            maxlength="10"
+                            title="Phone number must be 10 digits starting with 6-9"
                             required
                         >
                         <div class="validation-feedback hidden" id="phoneFeedback">
@@ -94,13 +102,14 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Password</label>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Password <span class="text-red-500">*</span></label>
                             <input 
                                 type="password" 
                                 name="password" 
                                 id="password"
                                 class="form-control"
-                                placeholder="Min. 6 characters"
+                                placeholder="Create strong password (min. 6 characters)"
+                                minlength="6"
                                 required
                             >
                             <div class="password-strength-meter">
@@ -112,13 +121,14 @@
                             <p class="helper-text text-xs mt-2">Must contain uppercase, lowercase, number and special character</p>
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Confirm Password</label>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Confirm Password <span class="text-red-500">*</span></label>
                             <input 
                                 type="password" 
                                 name="confirmPassword" 
                                 id="confirmPassword"
                                 class="form-control"
-                                placeholder="Confirm password"
+                                placeholder="Re-enter your password"
+                                minlength="6"
                                 required
                             >
                             <div class="validation-feedback hidden" id="confirmPasswordFeedback">
@@ -140,49 +150,61 @@
                     <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2"><i class="fas fa-map-pin text-indigo-600"></i> Address Information</h3>
 
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Street Address</label>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Street Address <span class="text-red-500">*</span></label>
                         <input 
                             type="text" 
                             name="street" 
                             class="form-control"
-                            placeholder="123 Main Street"
+                            placeholder="Enter complete street address (e.g., 123 Main Street)"
+                            minlength="5"
+                            maxlength="200"
                             required
                         >
+                        <p class="helper-text">Enter complete address with house/flat number</p>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">City</label>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">City <span class="text-red-500">*</span></label>
                             <input 
                                 type="text" 
                                 name="city" 
                                 class="form-control"
-                                placeholder="Mumbai"
+                                placeholder="Enter city name (e.g., Mumbai)"
+                                pattern="[A-Za-z ]{2,50}"
+                                title="City name should contain only letters"
                                 required
                             >
+                            <p class="helper-text">Only letters allowed</p>
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">State</label>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">State <span class="text-red-500">*</span></label>
                             <input 
                                 type="text" 
                                 name="state" 
                                 class="form-control"
-                                placeholder="Maharashtra"
+                                placeholder="Enter state name (e.g., Maharashtra)"
+                                pattern="[A-Za-z ]{2,50}"
+                                title="State name should contain only letters"
                                 required
                             >
+                            <p class="helper-text">Only letters allowed</p>
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Pincode</label>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Pincode <span class="text-red-500">*</span></label>
                         <input 
                             type="text" 
                             name="pincode" 
                             class="form-control"
-                            placeholder="400001"
+                            placeholder="Enter 6-digit pincode (e.g., 400001)"
                             pattern="[0-9]{6}"
+                            maxlength="6"
+                            title="Pincode must be exactly 6 digits"
                             required
                         >
+                        <p class="helper-text">Only 6 digits allowed</p>
                     </div>
                     <span class="form-error block" id="step2Error"></span>
                     <div class="flex gap-4">
@@ -201,30 +223,37 @@
                     <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2"><i class="fas fa-briefcase text-indigo-600"></i> Financial Information</h3>
 
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Monthly Income (₹)</label>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Monthly Income (₹) <span class="text-red-500">*</span></label>
                         <input 
                             type="number" 
                             name="monthlyIncome" 
                             class="form-control"
-                            placeholder="50000"
-                            min="0"
+                            placeholder="Enter monthly income (e.g., 50000)"
+                            min="1000"
+                            max="10000000"
+                            step="1000"
+                            title="Monthly income should be between ₹1,000 and ₹1,00,00,000"
                             required
                         >
+                        <p class="helper-text">Only numbers allowed (min. ₹1,000)</p>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Occupation</label>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Occupation <span class="text-red-500">*</span></label>
                         <input 
                             type="text" 
                             name="occupation" 
                             class="form-control"
-                            placeholder="Software Engineer"
+                            placeholder="Enter occupation (e.g., Software Engineer)"
+                            pattern="[A-Za-z ]{2,50}"
+                            title="Occupation should contain only letters and spaces"
                             required
                         >
+                        <p class="helper-text">Only letters and spaces allowed</p>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Employment Type</label>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Employment Type <span class="text-red-500">*</span></label>
                         <select name="employmentType" class="form-control" required>
                             <option value="">Select employment type</option>
                             <option value="salaried">Salaried</option>
