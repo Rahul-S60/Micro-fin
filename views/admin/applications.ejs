@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loan Applications - MicroFinance Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/feedback.css">
+</head>
+<body class="page-bg">
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Menu">
+        <i class="fas fa-bars text-xl"></i>
+    </button>
+    
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <div class="dashboard-shell">
+        <!-- Sidebar -->
+        <aside class="sidebar-modern" id="sidebar">
+            <div class="mb-8 flex items-center gap-3">
+                <div class="h-11 w-11 rounded-xl bg-white/10 flex items-center justify-center text-white">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-white/70">Admin Portal</p>
+                    <h1 class="text-lg font-bold">MicroFinance</h1>
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <p class="nav-title">Main Menu</p>
+                <a href="/admin/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
+            </div>
+
+            <div class="nav-group">
+                <p class="nav-title">Management</p>
+                <a href="/admin/customers"><i class="fas fa-users"></i> Customers</a>
+                <a href="/admin/applications" class="active"><i class="fas fa-file-alt"></i> Applications</a>
+                <a href="/admin/loan-products"><i class="fas fa-credit-card"></i> Loan Products</a>
+            </div>
+
+            <div class="nav-group">
+                <p class="nav-title">Verification</p>
+                <a href="/admin/kyc"><i class="fas fa-check-circle"></i> KYC Verification</a>
+            </div>
+
+            <div class="nav-group">
+                <p class="nav-title">Analytics</p>
+                <a href="/admin/reports"><i class="fas fa-chart-bar"></i> Reports</a>
+            </div>
+
+            <div class="nav-group">
+                <p class="nav-title">Account</p>
+                <a href="/admin/settings"><i class="fas fa-cog"></i> Settings</a>
+                <button id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content-area">
+            <div class="content-topbar">
+                <div>
+                    <p class="text-sm text-slate-500">Application Management</p>
+                    <h2 class="text-2xl font-bold text-slate-900">Loan Applications</h2>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="relative hidden md:block">
+                        <input type="text" id="searchInput" placeholder="Search applications..." class="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                    <button id="exportBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card mb-6">
+                <div class="flex flex-col md:flex-row gap-4 items-center">
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Application Status</label>
+                        <select id="statusFilter" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="">All Statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="under_review">Under Review</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                            <option value="active">Active</option>
+                        </select>
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
+                        <input type="date" id="dateFilter" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <button id="filterBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition">
+                            <i class="fas fa-filter"></i> Filter
+                        </button>
+                        <button id="resetBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-lg transition">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+                <div class="stat-card-modern">
+                    <div class="stat-number" id="totalCount">0</div>
+                    <div class="stat-label">Total Applications</div>
+                </div>
+                <div class="stat-card-modern">
+                    <div class="stat-number" id="pendingCount">0</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+                <div class="stat-card-modern">
+                    <div class="stat-number" id="approvedCount">0</div>
+                    <div class="stat-label">Approved</div>
+                </div>
+                <div class="stat-card-modern">
+                    <div class="stat-number" id="activeCount">0</div>
+                    <div class="stat-label">Active Loans</div>
+                </div>
+                <div class="stat-card-modern">
+                    <div class="stat-number" id="rejectedCount">0</div>
+                    <div class="stat-label">Rejected</div>
+                </div>
+            </div>
+
+            <!-- Applications Table -->
+            <div class="card table-elevated">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold">Applications List</h3>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-gray-600" id="pageInfo">Page 1</span>
+                        <button id="prevBtn" class="btn btn-sm btn-light" disabled><i class="fas fa-chevron-left"></i></button>
+                        <button id="nextBtn" class="btn btn-sm btn-light"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <input type="checkbox" id="selectAll" class="rounded">
+                                </th>
+                                <th>Application #</th>
+                                <th>Customer</th>
+                                <th>Loan Amount</th>
+                                <th>Loan Type</th>
+                                <th>Status</th>
+                                <th>Applied Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="applicationsTable">
+                            <tr>
+                                <td colspan="8" class="text-center text-gray-600 py-8">Loading applications...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Application Details Modal -->
+    <div id="appDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center p-6 border-b border-gray-200 sticky top-0 bg-white">
+                <h3 class="text-xl font-bold">Application Details</h3>
+                <button onclick="closeAppModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div id="appModalContent" class="p-6">
+                <!-- Content will be populated -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Approval/Rejection Modal -->
+    <div id="actionModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg max-w-md w-full">
+            <div class="flex justify-between items-center p-6 border-b border-gray-200">
+                <h3 class="text-xl font-bold" id="actionTitle">Approve Application</h3>
+                <button onclick="closeActionModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div id="actionContent">
+                        <!-- Content will be populated -->
+                    </div>
+                    <div class="flex gap-2 pt-4">
+                        <button onclick="submitAction()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition" id="actionBtn">
+                            Submit
+                        </button>
+                        <button onclick="closeActionModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg transition">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('adminToken');
+        if (!token) window.location.href = '/admin/login';
+
+        let currentPage = 1;
+        const limit = 10;
+        let currentAction = null;
+        let currentAppId = null;
+
+        // Initialize
+        loadApplications();
+        loadStats();
+
+        // Event Listeners
+        document.getElementById('filterBtn').addEventListener('click', () => {
+            currentPage = 1;
+            loadApplications();
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('dateFilter').value = '';
+            document.getElementById('searchInput').value = '';
+            currentPage = 1;
+            loadApplications();
+        });
+
+        document.getElementById('searchInput').addEventListener('keyup', debounce(() => {
+            currentPage = 1;
+            loadApplications();
+        }, 500));
+
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            currentPage++;
+            loadApplications();
+        });
+
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                loadApplications();
+            }
+        });
+
+        document.getElementById('exportBtn').addEventListener('click', exportToCSV);
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+
+        // Functions
+        function debounce(fn, delay) {
+            let timeoutId;
+            return function(...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => fn(...args), delay);
+            };
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/admin/dashboard', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const loans = data.data.statistics.loans;
+                    document.getElementById('totalCount').textContent = loans.totalApplications;
+                    document.getElementById('pendingCount').textContent = loans.pending;
+                    document.getElementById('approvedCount').textContent = loans.approved;
+                    document.getElementById('activeCount').textContent = loans.active;
+                    document.getElementById('rejectedCount').textContent = loans.totalApplications - loans.pending - loans.approved - loans.active;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function loadApplications() {
+            try {
+                const status = document.getElementById('statusFilter').value;
+                const search = document.getElementById('searchInput').value;
+
+                let url = `/api/admin/applications?page=${currentPage}&limit=${limit}`;
+                if (status) url += `&status=${status}`;
+
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const filtered = search 
+                        ? data.data.filter(a => 
+                            a._id.includes(search) ||
+                            (a.customerId && (a.customerId.firstName?.toLowerCase().includes(search.toLowerCase()) ||
+                                            a.customerId.lastName?.toLowerCase().includes(search.toLowerCase()))) ||
+                            a.loanAmount.toString().includes(search)
+                          )
+                        : data.data;
+
+                    if (filtered.length === 0) {
+                        document.getElementById('applicationsTable').innerHTML = '<tr><td colspan="8" class="text-center text-gray-600 py-8">No applications found</td></tr>';
+                    } else {
+                        document.getElementById('applicationsTable').innerHTML = filtered.map(app => `
+                            <tr>
+                                <td><input type="checkbox" class="appCheckbox rounded" value="${app._id}"></td>
+                                <td class="font-semibold">${app.applicationNumber || app._id.substring(0, 8)}</td>
+                                <td>
+                                    <div class="font-semibold">${app.customerId?.firstName || 'Unknown'} ${app.customerId?.lastName || ''}</div>
+                                    <div class="text-xs text-gray-500">${app.customerId?.email || 'N/A'}</div>
+                                </td>
+                                <td class="font-semibold">₹${app.loanAmount.toLocaleString()}</td>
+                                <td>${app.loanId?.name || 'N/A'}</td>
+                                <td>
+                                    <span class="badge badge-${getStatusColor(app.status)}">
+                                        ${app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                                    </span>
+                                </td>
+                                <td class="text-sm text-gray-600">${new Date(app.createdAt).toLocaleDateString()}</td>
+                                <td>
+                                    <div class="flex gap-2">
+                                        <button onclick="viewApplication('${app._id}')" class="text-indigo-600 hover:text-indigo-800" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        ${getActionButtons(app)}
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('');
+                    }
+
+                    document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${data.pagination.pages || 1}`;
+                    document.getElementById('nextBtn').disabled = currentPage >= (data.pagination.pages || 1);
+                    document.getElementById('prevBtn').disabled = currentPage <= 1;
+                }
+            } catch (error) {
+                console.error('Error loading applications:', error);
+                document.getElementById('applicationsTable').innerHTML = '<tr><td colspan="8" class="text-center text-red-600 py-8">Error loading applications</td></tr>';
+            }
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                'pending': 'pending',
+                'under_review': 'warning',
+                'approved': 'success',
+                'rejected': 'danger',
+                'active': 'info'
+            };
+            return colors[status] || 'gray';
+        }
+
+        function getActionButtons(app) {
+            const isPending = app.status === 'pending' || app.status === 'under_review';
+            const isApproved = app.status === 'approved';
+            
+            let buttons = '';
+            if (isPending) {
+                buttons = `
+                    <button onclick="openApprovalModal('${app._id}')" class="text-green-600 hover:text-green-800" title="Approve">
+                        <i class="fas fa-check"></i>
+                    </button>
+                    <button onclick="openRejectionModal('${app._id}')" class="text-red-600 hover:text-red-800" title="Reject">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+            } else if (isApproved) {
+                buttons = `
+                    <button onclick="openActivateModal('${app._id}')" class="text-blue-600 hover:text-blue-800" title="Activate">
+                        <i class="fas fa-play"></i>
+                    </button>
+                `;
+            }
+            return buttons;
+        }
+
+        async function viewApplication(id) {
+            try {
+                const response = await fetch(`/api/admin/applications/${id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const app = data.data;
+                    document.getElementById('appModalContent').innerHTML = `
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-xs text-gray-500">Application #</p>
+                                    <p class="font-semibold">${app.applicationNumber || app._id}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Status</p>
+                                    <p class="font-semibold"><span class="badge badge-${getStatusColor(app.status)}">${app.status}</span></p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Loan Amount</p>
+                                    <p class="font-semibold text-lg">₹${app.loanAmount.toLocaleString()}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Tenure (Months)</p>
+                                    <p class="font-semibold">${app.loanTenure || 'N/A'}</p>
+                                </div>
+                            </div>
+                            <hr>
+                            <div>
+                                <p class="font-semibold mb-2">Customer Information</p>
+                                <div class="bg-gray-50 p-3 rounded space-y-2 text-sm">
+                                    <p><span class="text-gray-600">Name:</span> <span class="font-medium">${app.customerId?.firstName} ${app.customerId?.lastName}</span></p>
+                                    <p><span class="text-gray-600">Email:</span> <span class="font-medium">${app.customerId?.email}</span></p>
+                                    <p><span class="text-gray-600">Phone:</span> <span class="font-medium">${app.customerId?.phoneNumber || 'N/A'}</span></p>
+                                </div>
+                            </div>
+                            ${app.remarks ? `
+                            <div>
+                                <p class="font-semibold mb-2">Remarks</p>
+                                <p class="text-gray-700 text-sm bg-blue-50 p-3 rounded">${app.remarks}</p>
+                            </div>
+                            ` : ''}
+                        </div>
+                    `;
+                    document.getElementById('appDetailsModal').classList.remove('hidden');
+                }
+            } catch (error) {
+                alert('Error loading application details');
+            }
+        }
+
+        function closeAppModal() {
+            document.getElementById('appDetailsModal').classList.add('hidden');
+        }
+
+        function openApprovalModal(id) {
+            currentAppId = id;
+            currentAction = 'approve';
+            document.getElementById('actionTitle').textContent = 'Approve Application';
+            document.getElementById('actionBtn').textContent = 'Approve';
+            document.getElementById('actionBtn').className = 'flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition';
+            document.getElementById('actionContent').innerHTML = `
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Remarks (Optional)</label>
+                    <textarea id="actionRemarks" placeholder="Add approval remarks..." class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" rows="3"></textarea>
+                </div>
+            `;
+            document.getElementById('actionModal').classList.remove('hidden');
+        }
+
+        function openRejectionModal(id) {
+            currentAppId = id;
+            currentAction = 'reject';
+            document.getElementById('actionTitle').textContent = 'Reject Application';
+            document.getElementById('actionBtn').textContent = 'Reject';
+            document.getElementById('actionBtn').className = 'flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition';
+            document.getElementById('actionContent').innerHTML = `
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Rejection Reason *</label>
+                    <textarea id="actionRemarks" placeholder="Enter rejection reason (min 10 characters)..." class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" rows="3"></textarea>
+                </div>
+            `;
+            document.getElementById('actionModal').classList.remove('hidden');
+        }
+
+        function openActivateModal(id) {
+            currentAppId = id;
+            currentAction = 'activate';
+            document.getElementById('actionTitle').textContent = 'Activate Loan';
+            document.getElementById('actionBtn').textContent = 'Activate';
+            document.getElementById('actionBtn').className = 'flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition';
+            document.getElementById('actionContent').innerHTML = `
+                <p class="text-sm text-gray-700">This will activate the loan and start the EMI cycle. Continue?</p>
+            `;
+            document.getElementById('actionModal').classList.remove('hidden');
+        }
+
+        function closeActionModal() {
+            document.getElementById('actionModal').classList.add('hidden');
+            currentAppId = null;
+            currentAction = null;
+        }
+
+        async function submitAction() {
+            if (!currentAppId || !currentAction) return;
+
+            const remarks = document.getElementById('actionRemarks')?.value || '';
+
+            if (currentAction === 'reject' && remarks.trim().length < 10) {
+                alert('Rejection reason must be at least 10 characters');
+                return;
+            }
+
+            const endpoints = {
+                approve: `/api/admin/application/${currentAppId}/approve`,
+                reject: `/api/admin/application/${currentAppId}/reject`,
+                activate: `/api/admin/application/${currentAppId}/activate`
+            };
+
+            const body = currentAction === 'reject' 
+                ? { reason: remarks }
+                : currentAction === 'approve'
+                ? { remarks }
+                : {};
+
+            try {
+                const response = await fetch(endpoints[currentAction], {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    alert(`Application ${currentAction}d successfully`);
+                    closeActionModal();
+                    loadApplications();
+                    loadStats();
+                } else {
+                    alert(data.message || `Error ${currentAction}ing application`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert(`Error ${currentAction}ing application`);
+            }
+        }
+
+        function exportToCSV() {
+            const status = document.getElementById('statusFilter').value;
+            
+            let url = '/api/admin/applications?limit=1000';
+            if (status) url += `&status=${status}`;
+
+            fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            }).then(res => res.json()).then(data => {
+                if (data.success && data.data.length > 0) {
+                    const csv = [
+                        ['Application #', 'Customer', 'Email', 'Loan Amount', 'Status', 'Applied Date', 'Loan Type'],
+                        ...data.data.map(a => [
+                            a.applicationNumber || a._id,
+                            `${a.customerId?.firstName} ${a.customerId?.lastName}`,
+                            a.customerId?.email,
+                            a.loanAmount,
+                            a.status,
+                            new Date(a.createdAt).toLocaleDateString(),
+                            a.loanId?.name || 'N/A'
+                        ])
+                    ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+
+                    const blob = new Blob([csv], { type: 'text/csv' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `applications_${Date.now()}.csv`;
+                    a.click();
+                }
+            }).catch(err => alert('Error exporting data'));
+        }
+
+        function logout() {
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('admin');
+            window.location.href = '/admin/login';
+        }
+
+        // Mobile menu toggle
+        document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('mobileOverlay').classList.toggle('active');
+        });
+
+        document.getElementById('mobileOverlay').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.remove('active');
+            document.getElementById('mobileOverlay').classList.remove('active');
+        });
+    </script>
+    <script src="/js/notifications.js"></script>
+    <script src="/js/main.js"></script>
+</body>
+</html>

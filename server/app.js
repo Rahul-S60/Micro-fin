@@ -156,6 +156,42 @@ app.get('/admin/dashboard', (req, res) => {
   });
 });
 
+app.get('/admin/customers', (req, res) => {
+  res.render('admin/customers', {
+    title: 'Customers Management - Admin',
+  });
+});
+
+app.get('/admin/applications', (req, res) => {
+  res.render('admin/applications', {
+    title: 'Loan Applications - Admin',
+  });
+});
+
+app.get('/admin/loan-products', (req, res) => {
+  res.render('admin/loan-products', {
+    title: 'Loan Products - Admin',
+  });
+});
+
+app.get('/admin/kyc', (req, res) => {
+  res.render('admin/kyc', {
+    title: 'KYC Verification - Admin',
+  });
+});
+
+app.get('/admin/settings', (req, res) => {
+  res.render('admin/settings', {
+    title: 'Admin Settings',
+  });
+});
+
+app.get('/admin/reports', (req, res) => {
+  res.render('admin/reports', {
+    title: 'Reports & Analytics - Admin',
+  });
+});
+
 // ============================================
 // 404 ERROR HANDLING
 // ============================================

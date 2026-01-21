@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Settings - MicroFinance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/feedback.css">
+</head>
+<body class="page-bg">
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Menu">
+        <i class="fas fa-bars text-xl"></i>
+    </button>
+    
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <div class="dashboard-shell">
+        <!-- Sidebar -->
+        <aside class="sidebar-modern" id="sidebar">
+            <div class="mb-8 flex items-center gap-3">
+                <div class="h-11 w-11 rounded-xl bg-white/10 flex items-center justify-center text-white">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-white/70">Admin Portal</p>
+                    <h1 class="text-lg font-bold">MicroFinance</h1>
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <p class="nav-title">Main Menu</p>
+                <a href="/admin/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
+            </div>
+
+            <div class="nav-group">
+                <p class="nav-title">Management</p>
+                <a href="/admin/customers"><i class="fas fa-users"></i> Customers</a>
+                <a href="/admin/applications"><i class="fas fa-file-alt"></i> Applications</a>
+                <a href="/admin/loan-products"><i class="fas fa-credit-card"></i> Loan Products</a>
+            </div>
+
+            <div class="nav-group">
+                <p class="nav-title">Verification</p>
+                <a href="/admin/kyc"><i class="fas fa-check-circle"></i> KYC Verification</a>
+            </div>
+
+            <div class="nav-group">
+                <p class="nav-title">Analytics</p>
+                <a href="/admin/reports"><i class="fas fa-chart-bar"></i> Reports</a>
+            </div>
+
+            <div class="nav-group">
+                <p class="nav-title">Account</p>
+                <a href="/admin/settings" class="active"><i class="fas fa-cog"></i> Settings</a>
+                <button id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content-area">
+            <div class="content-topbar">
+                <div>
+                    <p class="text-sm text-slate-500">Administration</p>
+                    <h2 class="text-2xl font-bold text-slate-900">Settings</h2>
+                </div>
+            </div>
+
+            <!-- Settings Tabs -->
+            <div class="card mb-6">
+                <div class="flex gap-0 border-b border-gray-200">
+                    <button class="settingsTab active px-6 py-3 font-medium border-b-2 border-indigo-600 text-indigo-600" data-tab="profile">
+                        <i class="fas fa-user mr-2"></i> Profile
+                    </button>
+                    <button class="settingsTab px-6 py-3 font-medium text-gray-600 hover:text-gray-900" data-tab="security">
+                        <i class="fas fa-lock mr-2"></i> Security
+                    </button>
+                    <button class="settingsTab px-6 py-3 font-medium text-gray-600 hover:text-gray-900" data-tab="system">
+                        <i class="fas fa-cogs mr-2"></i> System
+                    </button>
+                </div>
+            </div>
+
+            <!-- Profile Tab -->
+            <div id="profileTab" class="settingsContent">
+                <div class="card">
+                    <h3 class="text-lg font-bold mb-4">Profile Information</h3>
+                    <form id="profileForm" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                                <input type="text" id="firstName" required class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                                <input type="text" id="lastName" required class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                            <input type="email" id="email" disabled class="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-600">
+                            <p class="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                            <input type="text" id="role" disabled class="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-600">
+                            <p class="text-xs text-gray-500 mt-1">Role is assigned by system administrator</p>
+                        </div>
+
+                        <div class="pt-4 border-t border-gray-200">
+                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg transition">
+                                <i class="fas fa-save mr-2"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Security Tab -->
+            <div id="securityTab" class="settingsContent hidden">
+                <div class="card">
+                    <h3 class="text-lg font-bold mb-6">Security Settings</h3>
+                    
+                    <!-- Change Password Section -->
+                    <div class="mb-8">
+                        <h4 class="font-semibold text-gray-900 mb-4">Change Password</h4>
+                        <form id="passwordForm" class="space-y-4 max-w-md">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Current Password *</label>
+                                <input type="password" id="currentPassword" required class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">New Password *</label>
+                                <input type="password" id="newPassword" required class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <p class="text-xs text-gray-500 mt-1">Minimum 8 characters, include uppercase, lowercase, number and special character</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Confirm New Password *</label>
+                                <input type="password" id="confirmPassword" required class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+
+                            <div class="pt-4 border-t border-gray-200">
+                                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg transition">
+                                    <i class="fas fa-key mr-2"></i> Update Password
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <hr class="my-8">
+
+                    <!-- Session Security -->
+                    <div>
+                        <h4 class="font-semibold text-gray-900 mb-4">Session & Login</h4>
+                        <div class="space-y-3">
+                            <p class="text-sm text-gray-700">
+                                <span class="font-medium">Last Login:</span> <span id="lastLogin">Loading...</span>
+                            </p>
+                            <p class="text-sm text-gray-700">
+                                <span class="font-medium">Login IP:</span> <span id="loginIP">Loading...</span>
+                            </p>
+                            <button type="button" onclick="logoutAllSessions()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition mt-4">
+                                <i class="fas fa-sign-out-alt mr-2"></i> Logout from All Devices
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Tab -->
+            <div id="systemTab" class="settingsContent hidden">
+                <div class="card">
+                    <h3 class="text-lg font-bold mb-6">System Settings</h3>
+                    
+                    <!-- System Information -->
+                    <div class="mb-8">
+                        <h4 class="font-semibold text-gray-900 mb-4">System Information</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="p-4 bg-gray-50 rounded">
+                                <p class="text-xs text-gray-600">Application Name</p>
+                                <p class="font-semibold">MicroFinance System</p>
+                            </div>
+                            <div class="p-4 bg-gray-50 rounded">
+                                <p class="text-xs text-gray-600">Version</p>
+                                <p class="font-semibold">1.0.0</p>
+                            </div>
+                            <div class="p-4 bg-gray-50 rounded">
+                                <p class="text-xs text-gray-600">Environment</p>
+                                <p class="font-semibold">Production</p>
+                            </div>
+                            <div class="p-4 bg-gray-50 rounded">
+                                <p class="text-xs text-gray-600">Database Status</p>
+                                <p class="font-semibold text-green-600"><i class="fas fa-check-circle mr-1"></i> Connected</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-8">
+
+                    <!-- Email Configuration -->
+                    <div class="mb-8">
+                        <h4 class="font-semibold text-gray-900 mb-4">Email Configuration</h4>
+                        <div class="space-y-3 p-4 bg-blue-50 rounded">
+                            <p class="text-sm text-blue-900">
+                                <span class="font-medium">Status:</span> <span id="emailStatus">Checking...</span>
+                            </p>
+                            <p class="text-sm text-blue-900">
+                                <span class="font-medium">Provider:</span> <span id="emailProvider">Loading...</span>
+                            </p>
+                            <button type="button" onclick="testEmailConfig()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition mt-2">
+                                <i class="fas fa-envelope mr-2"></i> Test Email
+                            </button>
+                        </div>
+                    </div>
+
+                    <hr class="my-8">
+
+                    <!-- Maintenance -->
+                    <div>
+                        <h4 class="font-semibold text-gray-900 mb-4">Maintenance</h4>
+                        <div class="space-y-2">
+                            <button type="button" onclick="clearCache()" class="block w-full text-left p-4 bg-gray-50 hover:bg-gray-100 rounded transition">
+                                <i class="fas fa-trash mr-2"></i>
+                                <span class="font-medium">Clear Cache</span>
+                                <p class="text-xs text-gray-600 mt-1">Clear application cache to free up space</p>
+                            </button>
+                            <button type="button" onclick="exportBackup()" class="block w-full text-left p-4 bg-gray-50 hover:bg-gray-100 rounded transition">
+                                <i class="fas fa-download mr-2"></i>
+                                <span class="font-medium">Export Backup</span>
+                                <p class="text-xs text-gray-600 mt-1">Download system configuration backup</p>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('adminToken');
+        const admin = JSON.parse(localStorage.getItem('admin') || '{}');
+        
+        if (!token) window.location.href = '/admin/login';
+
+        // Initialize
+        loadAdminProfile();
+
+        // Tab switching
+        document.querySelectorAll('.settingsTab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabName = this.dataset.tab;
+                
+                document.querySelectorAll('.settingsTab').forEach(t => {
+                    t.classList.remove('border-b-2', 'border-indigo-600', 'text-indigo-600');
+                    t.classList.add('text-gray-600');
+                });
+                
+                this.classList.remove('text-gray-600');
+                this.classList.add('border-b-2', 'border-indigo-600', 'text-indigo-600');
+                
+                document.querySelectorAll('.settingsContent').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                
+                document.getElementById(tabName + 'Tab').classList.remove('hidden');
+            });
+        });
+
+        // Form handlers
+        document.getElementById('profileForm').addEventListener('submit', updateProfile);
+        document.getElementById('passwordForm').addEventListener('submit', updatePassword);
+
+        // Functions
+        function loadAdminProfile() {
+            document.getElementById('firstName').value = admin.firstName || '';
+            document.getElementById('lastName').value = admin.lastName || '';
+            document.getElementById('email').value = admin.email || '';
+            document.getElementById('role').value = (admin.role || 'admin').toUpperCase();
+            
+            // Load email status
+            checkEmailStatus();
+        }
+
+        async function updateProfile(e) {
+            e.preventDefault();
+            
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+
+            try {
+                const response = await fetch('/api/admin/profile', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ firstName, lastName })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    alert('Profile updated successfully');
+                    admin.firstName = firstName;
+                    admin.lastName = lastName;
+                    localStorage.setItem('admin', JSON.stringify(admin));
+                } else {
+                    alert(data.message || 'Error updating profile');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error updating profile');
+            }
+        }
+
+        async function updatePassword(e) {
+            e.preventDefault();
+
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (newPassword !== confirmPassword) {
+                alert('New passwords do not match');
+                return;
+            }
+
+            if (newPassword.length < 8) {
+                alert('Password must be at least 8 characters');
+                return;
+            }
+
+            const hasUpperCase = /[A-Z]/.test(newPassword);
+            const hasLowerCase = /[a-z]/.test(newPassword);
+            const hasNumber = /[0-9]/.test(newPassword);
+            const hasSpecialChar = /[!@#$%^&*]/.test(newPassword);
+
+            if (!hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecialChar) {
+                alert('Password must contain uppercase, lowercase, number and special character');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/change-password', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ currentPassword, newPassword })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    alert('Password updated successfully');
+                    document.getElementById('passwordForm').reset();
+                } else {
+                    alert(data.message || 'Error updating password');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error updating password');
+            }
+        }
+
+        async function checkEmailStatus() {
+            try {
+                const response = await fetch('/api/auth/email-status', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('emailStatus').textContent = data.data.configured ? '✓ Configured' : '✗ Not Configured';
+                    document.getElementById('emailProvider').textContent = data.data.provider || 'Unknown';
+                }
+            } catch (error) {
+                document.getElementById('emailStatus').textContent = 'Unable to check';
+            }
+        }
+
+        async function testEmailConfig() {
+            if (!confirm('This will send a test email to your address')) return;
+            
+            try {
+                const response = await fetch('/api/admin/test-email', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    alert('Test email sent successfully! Check your inbox.');
+                } else {
+                    alert(data.message || 'Error sending test email');
+                }
+            } catch (error) {
+                alert('Error sending test email');
+            }
+        }
+
+        function clearCache() {
+            localStorage.clear();
+            alert('Cache cleared. Please login again.');
+            window.location.href = '/admin/login';
+        }
+
+        function exportBackup() {
+            alert('Backup export functionality will be available soon');
+        }
+
+        function logoutAllSessions() {
+            if (!confirm('This will logout all your active sessions. Continue?')) return;
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('admin');
+            window.location.href = '/admin/login';
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('admin');
+            window.location.href = '/admin/login';
+        });
+
+        // Mobile menu toggle
+        document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('mobileOverlay').classList.toggle('active');
+        });
+
+        document.getElementById('mobileOverlay').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.remove('active');
+            document.getElementById('mobileOverlay').classList.remove('active');
+        });
+    </script>
+    <script src="/js/notifications.js"></script>
+    <script src="/js/main.js"></script>
+</body>
+</html>

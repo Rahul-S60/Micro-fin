@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customers Management - MicroFinance Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/feedback.css">
+</head>
+<body class="page-bg">
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Menu">
+        <i class="fas fa-bars text-xl"></i>
+    </button>
+    
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <div class="dashboard-shell">
+        <!-- Sidebar -->
+        <aside class="sidebar-modern" id="sidebar">
+            <div class="mb-8 flex items-center gap-3">
+                <div class="h-11 w-11 rounded-xl bg-white/10 flex items-center justify-center text-white">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-white/70">Admin Portal</p>
+                    <h1 class="text-lg font-bold">MicroFinance</h1>
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <p class="nav-title">Main Menu</p>
+                <a href="/admin/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
+            </div>
+
+            <div class="nav-group">
+                <p class="nav-title">Management</p>
+                <a href="/admin/customers" class="active"><i class="fas fa-users"></i> Customers</a>
+                <a href="/admin/applications"><i class="fas fa-file-alt"></i> Applications</a>
+                <a href="/admin/loan-products"><i class="fas fa-credit-card"></i> Loan Products</a>
+            </div>
+
+            <div class="nav-group">
+                <p class="nav-title">Verification</p>
+                <a href="/admin/kyc"><i class="fas fa-check-circle"></i> KYC Verification</a>
+            </div>
+
+            <div class="nav-group">
+                <p class="nav-title">Analytics</p>
+                <a href="/admin/reports"><i class="fas fa-chart-bar"></i> Reports</a>
+            </div>
+
+            <div class="nav-group">
+                <p class="nav-title">Account</p>
+                <a href="/admin/settings"><i class="fas fa-cog"></i> Settings</a>
+                <button id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content-area">
+            <div class="content-topbar">
+                <div>
+                    <p class="text-sm text-slate-500">Customer Management</p>
+                    <h2 class="text-2xl font-bold text-slate-900">Customers</h2>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="relative hidden md:block">
+                        <input type="text" id="searchInput" placeholder="Search customers..." class="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                    <button id="exportBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card mb-6">
+                <div class="flex flex-col md:flex-row gap-4 items-center">
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">KYC Status</label>
+                        <select id="kycFilter" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="">All Statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="verified">Verified</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Account Status</label>
+                        <select id="accountFilter" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="suspended">Suspended</option>
+                            <option value="closed">Closed</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <button id="filterBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition">
+                            <i class="fas fa-filter"></i> Filter
+                        </button>
+                        <button id="resetBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-lg transition">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="stat-card-modern">
+                    <div class="stat-number" id="totalCount">0</div>
+                    <div class="stat-label">Total Customers</div>
+                </div>
+                <div class="stat-card-modern">
+                    <div class="stat-number" id="verifiedCount">0</div>
+                    <div class="stat-label">KYC Verified</div>
+                </div>
+                <div class="stat-card-modern">
+                    <div class="stat-number" id="pendingCount">0</div>
+                    <div class="stat-label">KYC Pending</div>
+                </div>
+                <div class="stat-card-modern">
+                    <div class="stat-number" id="activeCount">0</div>
+                    <div class="stat-label">Active Accounts</div>
+                </div>
+            </div>
+
+            <!-- Customers Table -->
+            <div class="card table-elevated">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold">Customers List</h3>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-gray-600" id="pageInfo">Page 1</span>
+                        <button id="prevBtn" class="btn btn-sm btn-light" disabled><i class="fas fa-chevron-left"></i></button>
+                        <button id="nextBtn" class="btn btn-sm btn-light"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <input type="checkbox" id="selectAll" class="rounded">
+                                </th>
+                                <th>Customer Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>KYC Status</th>
+                                <th>Account Status</th>
+                                <th>Joined</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customersTable">
+                            <tr>
+                                <td colspan="8" class="text-center text-gray-600 py-8">Loading customers...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Customer Details Modal -->
+    <div id="customerModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto">
+            <div class="flex justify-between items-center p-6 border-b border-gray-200">
+                <h3 class="text-xl font-bold">Customer Details</h3>
+                <button onclick="closeCustomerModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div id="customerModalContent" class="p-6">
+                <!-- Content will be populated -->
+            </div>
+        </div>
+    </div>
+
+    <!-- KYC Verification Modal -->
+    <div id="kycModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg max-w-md w-full">
+            <div class="flex justify-between items-center p-6 border-b border-gray-200">
+                <h3 class="text-xl font-bold">KYC Verification</h3>
+                <button onclick="closeKYCModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                        <select id="kycStatus" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="verified">Verified</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Remarks (Optional)</label>
+                        <textarea id="kycRemarks" placeholder="Add any remarks..." class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3"></textarea>
+                    </div>
+                    <div class="flex gap-2 pt-4">
+                        <button onclick="submitKYCVerification()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition">
+                            <i class="fas fa-check mr-2"></i> Submit
+                        </button>
+                        <button onclick="closeKYCModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg transition">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('adminToken');
+        if (!token) window.location.href = '/admin/login';
+
+        let currentPage = 1;
+        const limit = 10;
+        let currentCustomerId = null;
+
+        // Initialize
+        loadCustomers();
+        loadStats();
+
+        // Event Listeners
+        document.getElementById('filterBtn').addEventListener('click', () => {
+            currentPage = 1;
+            loadCustomers();
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            document.getElementById('kycFilter').value = '';
+            document.getElementById('accountFilter').value = '';
+            document.getElementById('searchInput').value = '';
+            currentPage = 1;
+            loadCustomers();
+        });
+
+        document.getElementById('searchInput').addEventListener('keyup', debounce(() => {
+            currentPage = 1;
+            loadCustomers();
+        }, 500));
+
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            currentPage++;
+            loadCustomers();
+        });
+
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                loadCustomers();
+            }
+        });
+
+        document.getElementById('exportBtn').addEventListener('click', exportToCSV);
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('admin');
+            window.location.href = '/admin/login';
+        });
+
+        // Functions
+        function debounce(fn, delay) {
+            let timeoutId;
+            return function(...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => fn(...args), delay);
+            };
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/admin/dashboard', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const stats = data.data.statistics.customers;
+                    document.getElementById('totalCount').textContent = stats.total;
+                    document.getElementById('verifiedCount').textContent = stats.verified;
+                    document.getElementById('pendingCount').textContent = stats.kycPending;
+                    document.getElementById('activeCount').textContent = stats.total - (stats.kycPending || 0);
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function loadCustomers() {
+            try {
+                const kyc = document.getElementById('kycFilter').value;
+                const account = document.getElementById('accountFilter').value;
+                const search = document.getElementById('searchInput').value;
+
+                let url = `/api/admin/customers?page=${currentPage}&limit=${limit}`;
+                if (kyc) url += `&kycStatus=${kyc}`;
+                if (account) url += `&accountStatus=${account}`;
+
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const filtered = search 
+                        ? data.data.filter(c => 
+                            c.firstName.toLowerCase().includes(search.toLowerCase()) ||
+                            c.lastName.toLowerCase().includes(search.toLowerCase()) ||
+                            c.email.toLowerCase().includes(search.toLowerCase()) ||
+                            (c.phoneNumber && c.phoneNumber.includes(search))
+                          )
+                        : data.data;
+
+                    if (filtered.length === 0) {
+                        document.getElementById('customersTable').innerHTML = '<tr><td colspan="8" class="text-center text-gray-600 py-8">No customers found</td></tr>';
+                    } else {
+                        document.getElementById('customersTable').innerHTML = filtered.map(customer => `
+                            <tr>
+                                <td><input type="checkbox" class="customerCheckbox rounded" value="${customer._id}"></td>
+                                <td>
+                                    <div class="font-semibold">${customer.firstName} ${customer.lastName}</div>
+                                    <div class="text-xs text-gray-500">ID: ${customer._id.substring(0, 8)}</div>
+                                </td>
+                                <td class="text-sm">${customer.email}</td>
+                                <td class="text-sm">${customer.phoneNumber || 'N/A'}</td>
+                                <td>
+                                    <span class="badge badge-${customer.kycStatus === 'verified' ? 'success' : customer.kycStatus === 'pending' ? 'pending' : 'danger'}">
+                                        ${customer.kycStatus.charAt(0).toUpperCase() + customer.kycStatus.slice(1)}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-${customer.accountStatus === 'active' ? 'success' : 'warning'}">
+                                        ${customer.accountStatus.charAt(0).toUpperCase() + customer.accountStatus.slice(1)}
+                                    </span>
+                                </td>
+                                <td class="text-sm text-gray-600">${new Date(customer.createdAt).toLocaleDateString()}</td>
+                                <td>
+                                    <div class="flex gap-2">
+                                        <button onclick="viewCustomer('${customer._id}')" class="text-indigo-600 hover:text-indigo-800" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        ${customer.kycStatus === 'pending' ? `<button onclick="openKYCModal('${customer._id}')" class="text-green-600 hover:text-green-800" title="Verify KYC">
+                                            <i class="fas fa-check-circle"></i>
+                                        </button>` : ''}
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('');
+                    }
+
+                    document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${data.pagination.pages}`;
+                    document.getElementById('nextBtn').disabled = currentPage >= data.pagination.pages;
+                    document.getElementById('prevBtn').disabled = currentPage <= 1;
+                }
+            } catch (error) {
+                console.error('Error loading customers:', error);
+                document.getElementById('customersTable').innerHTML = '<tr><td colspan="8" class="text-center text-red-600 py-8">Error loading customers</td></tr>';
+            }
+        }
+
+        async function viewCustomer(id) {
+            try {
+                const response = await fetch(`/api/admin/customer/${id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const customer = data.data.customer;
+                    const apps = data.data.loanApplications || [];
+                    document.getElementById('customerModalContent').innerHTML = `
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-xs text-gray-500">Full Name</p>
+                                    <p class="font-semibold">${customer.firstName} ${customer.lastName}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Email</p>
+                                    <p class="font-semibold">${customer.email}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Phone</p>
+                                    <p class="font-semibold">${customer.phoneNumber || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">KYC Status</p>
+                                    <p class="font-semibold"><span class="badge badge-${customer.kycStatus === 'verified' ? 'success' : 'pending'}">${customer.kycStatus}</span></p>
+                                </div>
+                            </div>
+                            <hr>
+                            <div>
+                                <p class="font-semibold mb-2">Loan Applications (${apps.length})</p>
+                                ${apps.length > 0 ? `
+                                    <div class="space-y-2">
+                                        ${apps.map(app => `
+                                            <div class="p-3 bg-gray-50 rounded">
+                                                <div class="flex justify-between items-center">
+                                                    <span class="font-medium">₹${app.loanAmount.toLocaleString()}</span>
+                                                    <span class="badge badge-${app.status === 'approved' ? 'success' : 'pending'}">${app.status}</span>
+                                                </div>
+                                                <p class="text-xs text-gray-600">${app.loanId?.name || 'N/A'}</p>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : '<p class="text-gray-500 text-sm">No applications yet</p>'}
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('customerModal').classList.remove('hidden');
+                }
+            } catch (error) {
+                alert('Error loading customer details');
+            }
+        }
+
+        function closeCustomerModal() {
+            document.getElementById('customerModal').classList.add('hidden');
+        }
+
+        function openKYCModal(id) {
+            currentCustomerId = id;
+            document.getElementById('kycStatus').value = 'verified';
+            document.getElementById('kycRemarks').value = '';
+            document.getElementById('kycModal').classList.remove('hidden');
+        }
+
+        function closeKYCModal() {
+            document.getElementById('kycModal').classList.add('hidden');
+            currentCustomerId = null;
+        }
+
+        async function submitKYCVerification() {
+            if (!currentCustomerId) return;
+            
+            const status = document.getElementById('kycStatus').value;
+            const remarks = document.getElementById('kycRemarks').value;
+
+            try {
+                const response = await fetch(`/api/admin/customer/${currentCustomerId}/kyc`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ status, remarks })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    alert('KYC status updated successfully');
+                    closeKYCModal();
+                    loadCustomers();
+                    loadStats();
+                } else {
+                    alert(data.message || 'Error updating KYC status');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error updating KYC status');
+            }
+        }
+
+        function exportToCSV() {
+            const kycFilter = document.getElementById('kycFilter').value;
+            const accountFilter = document.getElementById('accountFilter').value;
+            
+            let url = '/api/admin/customers?limit=1000';
+            if (kycFilter) url += `&kycStatus=${kycFilter}`;
+            if (accountFilter) url += `&accountStatus=${accountFilter}`;
+
+            fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            }).then(res => res.json()).then(data => {
+                if (data.success && data.data.length > 0) {
+                    const csv = [
+                        ['Name', 'Email', 'Phone', 'KYC Status', 'Account Status', 'Joined Date'],
+                        ...data.data.map(c => [
+                            `${c.firstName} ${c.lastName}`,
+                            c.email,
+                            c.phoneNumber || 'N/A',
+                            c.kycStatus,
+                            c.accountStatus,
+                            new Date(c.createdAt).toLocaleDateString()
+                        ])
+                    ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+
+                    const blob = new Blob([csv], { type: 'text/csv' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `customers_${Date.now()}.csv`;
+                    a.click();
+                }
+            }).catch(err => alert('Error exporting data'));
+        }
+
+        // Mobile menu toggle
+        document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('mobileOverlay').classList.toggle('active');
+        });
+
+        document.getElementById('mobileOverlay').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.remove('active');
+            document.getElementById('mobileOverlay').classList.remove('active');
+        });
+    </script>
+    <script src="/js/notifications.js"></script>
+    <script src="/js/main.js"></script>
+</body>
+</html>

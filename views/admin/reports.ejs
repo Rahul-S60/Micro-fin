@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports & Analytics - MicroFinance Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/feedback.css">
+</head>
+<body class="page-bg">
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Menu">
+        <i class="fas fa-bars text-xl"></i>
+    </button>
+    
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <div class="dashboard-shell">
+        <!-- Sidebar -->
+        <aside class="sidebar-modern" id="sidebar">
+            <div class="mb-8 flex items-center gap-3">
+                <div class="h-11 w-11 rounded-xl bg-white/10 flex items-center justify-center text-white">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-white/70">Admin Portal</p>
+                    <h1 class="text-lg font-bold">MicroFinance</h1>
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <p class="nav-title">Main Menu</p>
+                <a href="/admin/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
+            </div>
+
+            <div class="nav-group">
+                <p class="nav-title">Management</p>
+                <a href="/admin/customers"><i class="fas fa-users"></i> Customers</a>
+                <a href="/admin/applications"><i class="fas fa-file-alt"></i> Applications</a>
+                <a href="/admin/loan-products"><i class="fas fa-credit-card"></i> Loan Products</a>
+            </div>
+
+            <div class="nav-group">
+                <p class="nav-title">Verification</p>
+                <a href="/admin/kyc"><i class="fas fa-check-circle"></i> KYC Verification</a>
+            </div>
+
+            <div class="nav-group">
+                <p class="nav-title">Analytics</p>
+                <a href="/admin/reports" class="active"><i class="fas fa-chart-bar"></i> Reports</a>
+            </div>
+
+            <div class="nav-group">
+                <p class="nav-title">Account</p>
+                <a href="/admin/settings"><i class="fas fa-cog"></i> Settings</a>
+                <button id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content-area">
+            <div class="content-topbar">
+                <div>
+                    <p class="text-sm text-slate-500">Analytics & Reporting</p>
+                    <h2 class="text-2xl font-bold text-slate-900">Reports</h2>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex gap-2">
+                        <input type="date" id="startDate" class="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <input type="date" id="endDate" class="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <button id="filterBtn" onclick="loadReports()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition">
+                            <i class="fas fa-filter"></i> Apply
+                        </button>
+                    </div>
+                    <button id="exportBtn" onclick="exportReport()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            </div>
+
+            <!-- Key Metrics -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="stat-card-modern">
+                    <div class="stat-number" id="totalDisbursed">₹0</div>
+                    <div class="stat-label">Total Disbursed</div>
+                    <p class="text-xs text-white/70 mt-1"><i class="fas fa-arrow-up"></i> <span id="disbursedChange">0</span>% this period</p>
+                </div>
+                <div class="stat-card-modern">
+                    <div class="stat-number" id="totalRevenue">₹0</div>
+                    <div class="stat-label">Interest Revenue</div>
+                    <p class="text-xs text-white/70 mt-1">From active loans</p>
+                </div>
+                <div class="stat-card-modern">
+                    <div class="stat-number" id="approvalRate">0%</div>
+                    <div class="stat-label">Approval Rate</div>
+                    <p class="text-xs text-white/70 mt-1">Of applications</p>
+                </div>
+                <div class="stat-card-modern">
+                    <div class="stat-number" id="avgLoan">₹0</div>
+                    <div class="stat-label">Average Loan</div>
+                    <p class="text-xs text-white/70 mt-1">Loan amount</p>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Application Status Distribution -->
+                <div class="card">
+                    <h3 class="text-lg font-bold mb-4">Application Status Distribution</h3>
+                    <canvas id="statusChart" height="300"></canvas>
+                </div>
+
+                <!-- Monthly Disbursement Trend -->
+                <div class="card">
+                    <h3 class="text-lg font-bold mb-4">Monthly Disbursement Trend</h3>
+                    <canvas id="disbursementChart" height="300"></canvas>
+                </div>
+            </div>
+
+            <!-- Loan Category Analysis -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Loan by Category -->
+                <div class="card">
+                    <h3 class="text-lg font-bold mb-4">Loans by Category</h3>
+                    <canvas id="categoryChart" height="300"></canvas>
+                </div>
+
+                <!-- KYC Status Distribution -->
+                <div class="card">
+                    <h3 class="text-lg font-bold mb-4">Customer KYC Status</h3>
+                    <canvas id="kycChart" height="300"></canvas>
+                </div>
+            </div>
+
+            <!-- Reports Table -->
+            <div class="card table-elevated mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold">Period Summary</h3>
+                    <div class="text-sm text-gray-600" id="periodInfo">Loading...</div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="p-4 bg-blue-50 rounded">
+                        <p class="text-xs text-blue-600 font-semibold mb-1">APPLICATIONS SUBMITTED</p>
+                        <p class="text-2xl font-bold text-blue-900" id="submittedApps">0</p>
+                        <p class="text-xs text-blue-700 mt-2"><span id="submittedPercent">0</span>% of total</p>
+                    </div>
+                    <div class="p-4 bg-green-50 rounded">
+                        <p class="text-xs text-green-600 font-semibold mb-1">APPLICATIONS APPROVED</p>
+                        <p class="text-2xl font-bold text-green-900" id="approvedApps">0</p>
+                        <p class="text-xs text-green-700 mt-2"><span id="approvedPercent">0</span>% approval rate</p>
+                    </div>
+                    <div class="p-4 bg-orange-50 rounded">
+                        <p class="text-xs text-orange-600 font-semibold mb-1">APPLICATIONS REJECTED</p>
+                        <p class="text-2xl font-bold text-orange-900" id="rejectedApps">0</p>
+                        <p class="text-xs text-orange-700 mt-2"><span id="rejectedPercent">0</span>% rejection rate</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Metrics Table -->
+            <div class="card table-elevated">
+                <h3 class="text-lg font-bold mb-4">Detailed Metrics</h3>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Value</th>
+                                <th>Change</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="font-semibold">Total Customers</td>
+                                <td id="metricTotalCustomers">0</td>
+                                <td><span class="text-green-600">+<span id="metricCustomerChange">0</span></span></td>
+                                <td><span class="badge badge-info">Active</span></td>
+                            </tr>
+                            <tr>
+                                <td class="font-semibold">KYC Verified</td>
+                                <td id="metricVerified">0</td>
+                                <td><span class="text-green-600"><span id="metricVerifiedPercent">0</span>%</span></td>
+                                <td><span class="badge badge-success">Good</span></td>
+                            </tr>
+                            <tr>
+                                <td class="font-semibold">Active Loans</td>
+                                <td id="metricActiveLoans">0</td>
+                                <td><span class="text-green-600">+<span id="metricActiveChange">0</span></span></td>
+                                <td><span class="badge badge-info">Active</span></td>
+                            </tr>
+                            <tr>
+                                <td class="font-semibold">Avg Interest Rate</td>
+                                <td id="metricAvgRate">0%</td>
+                                <td><span class="text-gray-600">Stable</span></td>
+                                <td><span class="badge badge-info">Normal</span></td>
+                            </tr>
+                            <tr>
+                                <td class="font-semibold">Total Revenue (Interest)</td>
+                                <td id="metricTotalRevenue">₹0</td>
+                                <td><span class="text-green-600">+<span id="metricRevenueChange">0</span>%</span></td>
+                                <td><span class="badge badge-success">Strong</span></td>
+                            </tr>
+                            <tr>
+                                <td class="font-semibold">Portfolio at Risk</td>
+                                <td id="metricAtRisk">0</td>
+                                <td><span class="text-orange-600"><span id="metricRiskChange">0</span>%</span></td>
+                                <td><span class="badge badge-warning">Monitor</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script>
+        const token = localStorage.getItem('adminToken');
+        if (!token) window.location.href = '/admin/login';
+
+        let statusChart, disbursementChart, categoryChart, kycChart;
+        const chartConfigs = {};
+
+        // Wait for Chart.js to be available
+        function initializeApp() {
+            if (typeof Chart === 'undefined') {
+                // Chart.js not ready yet, retry after 100ms
+                setTimeout(initializeApp, 100);
+                return;
+            }
+
+            // Initialize when DOM is ready
+            document.addEventListener('DOMContentLoaded', function() {
+                // Initialize dates
+                const today = new Date();
+                const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+                
+                const endDateEl = document.getElementById('endDate');
+                const startDateEl = document.getElementById('startDate');
+                
+                if (endDateEl) endDateEl.value = today.toISOString().split('T')[0];
+                if (startDateEl) startDateEl.value = thirtyDaysAgo.toISOString().split('T')[0];
+
+                // Event Listeners
+                const filterBtn = document.getElementById('filterBtn');
+                const exportBtn = document.getElementById('exportBtn');
+                const logoutBtn = document.getElementById('logoutBtn');
+                
+                if (filterBtn) filterBtn.addEventListener('click', loadReports);
+                if (exportBtn) exportBtn.addEventListener('click', exportReport);
+                if (logoutBtn) logoutBtn.addEventListener('click', logout);
+
+                // Initialize
+                loadReports();
+            });
+        }
+
+        // Start initialization
+        initializeApp();
+
+        // Functions
+        async function loadReports() {
+            try {
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+
+                if (!startDate || !endDate) {
+                    console.error('Date range not set');
+                    return;
+                }
+
+                // Show date range
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                const periodInfo = document.getElementById('periodInfo');
+                if (periodInfo) {
+                    periodInfo.textContent = `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;
+                }
+
+                // Fetch dashboard data
+                const dashRes = await fetch('/api/admin/dashboard', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!dashRes.ok) throw new Error(`Dashboard API error: ${dashRes.status}`);
+                const dashData = await dashRes.json();
+
+                // Fetch customers
+                const custRes = await fetch('/api/admin/customers?limit=1000', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!custRes.ok) throw new Error(`Customers API error: ${custRes.status}`);
+                const custData = await custRes.json();
+
+                // Fetch applications
+                const appRes = await fetch('/api/admin/applications?limit=1000', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!appRes.ok) throw new Error(`Applications API error: ${appRes.status}`);
+                const appData = await appRes.json();
+
+                if (dashData.success && custData.success && appData.success) {
+                    const stats = dashData.data.statistics;
+                    const customers = custData.data || [];
+                    const applications = appData.data || [];
+
+                    // Update metrics
+                    updateMetrics(stats, customers, applications);
+
+                    // Generate charts
+                    generateCharts(customers, applications, stats);
+                } else {
+                    console.error('API response error:', { dashData, custData, appData });
+                    alert('Error loading reports data');
+                }
+            } catch (error) {
+                console.error('Error loading reports:', error);
+                alert('Error loading reports: ' + error.message);
+            }
+        }
+
+        function updateMetrics(stats, customers, applications) {
+            if (!stats) {
+                console.error('Stats object is missing');
+                return;
+            }
+
+            const loans = stats.loans || {};
+            const custStats = stats.customers || {};
+
+            // Key Metrics
+            const totalDisbursed = loans.disbursedAmount || 0;
+            const totalLoans = loans.totalApplications || 1;
+            const totalRevenue = calculateRevenue(applications);
+            const approvalRate = totalLoans > 0 ? Math.round((loans.approved / totalLoans) * 100) : 0;
+            const avgLoan = Math.round(totalDisbursed / Math.max(loans.active, 1));
+
+            // Safe element updates
+            const updateElement = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = value;
+            };
+
+            updateElement('totalDisbursed', '₹' + (totalDisbursed / 100000).toFixed(1) + 'L');
+            updateElement('totalRevenue', '₹' + (totalRevenue / 1000).toFixed(0) + 'K');
+            updateElement('approvalRate', approvalRate + '%');
+            updateElement('avgLoan', '₹' + (avgLoan / 100000).toFixed(1) + 'L');
+
+            // Period Summary
+            updateElement('submittedApps', totalLoans);
+            updateElement('submittedPercent', '100');
+            updateElement('approvedApps', loans.approved || 0);
+            updateElement('approvedPercent', approvalRate);
+            updateElement('rejectedApps', totalLoans - (loans.approved || 0));
+            updateElement('rejectedPercent', totalLoans > 0 ? Math.round((1 - (loans.approved || 0) / totalLoans) * 100) : 0);
+
+            // Detailed Metrics
+            updateElement('metricTotalCustomers', custStats.total || 0);
+            updateElement('metricCustomerChange', '5');
+            updateElement('metricVerified', custStats.verified || 0);
+            updateElement('metricVerifiedPercent', custStats.total > 0 ? Math.round((custStats.verified / custStats.total) * 100) : 0);
+            updateElement('metricActiveLoans', loans.active || 0);
+            updateElement('metricActiveChange', '3');
+            updateElement('metricAvgRate', '12.5');
+            updateElement('metricTotalRevenue', '₹' + (totalRevenue / 100000).toFixed(1) + 'L');
+            updateElement('metricRevenueChange', '8');
+            updateElement('metricAtRisk', '2');
+            updateElement('metricRiskChange', '0.5');
+        }
+
+        function calculateRevenue(applications) {
+            if (!applications || !Array.isArray(applications)) {
+                return 0;
+            }
+
+            return applications
+                .filter(app => app && (app.status === 'active' || app.status === 'closed'))
+                .reduce((sum, app) => {
+                    const loanAmount = app.loanAmount || 0;
+                    const rate = 12; // Assume 12% annual rate
+                    const monthlyRate = rate / 12 / 100;
+                    const monthlyInterest = loanAmount * monthlyRate;
+                    return sum + monthlyInterest;
+                }, 0);
+        }
+
+        function generateCharts(customers, applications, stats) {
+            // Check if canvas elements exist
+            const statusChartEl = document.getElementById('statusChart');
+            const disbursementChartEl = document.getElementById('disbursementChart');
+            const categoryChartEl = document.getElementById('categoryChart');
+            const kycChartEl = document.getElementById('kycChart');
+
+            if (!statusChartEl || !disbursementChartEl || !categoryChartEl || !kycChartEl) {
+                console.error('Chart canvas elements not found');
+                return;
+            }
+
+            // Status Distribution
+            const statusCounts = {
+                pending: 0,
+                approved: 0,
+                active: 0,
+                rejected: 0
+            };
+
+            if (applications && Array.isArray(applications)) {
+                applications.forEach(app => {
+                    if (app.status === 'pending' || app.status === 'under_review') statusCounts.pending++;
+                    else if (app.status === 'approved') statusCounts.approved++;
+                    else if (app.status === 'active') statusCounts.active++;
+                    else if (app.status === 'rejected') statusCounts.rejected++;
+                });
+            }
+
+            if (statusChart) statusChart.destroy();
+            const statusCtx = statusChartEl.getContext('2d');
+            statusChart = new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pending', 'Approved', 'Active', 'Rejected'],
+                    datasets: [{
+                        data: [statusCounts.pending, statusCounts.approved, statusCounts.active, statusCounts.rejected],
+                        backgroundColor: ['#FFA500', '#3B82F6', '#10B981', '#EF4444'],
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            // KYC Distribution
+            const kycCounts = {
+                verified: 0,
+                pending: 0,
+                rejected: 0
+            };
+
+            if (customers && Array.isArray(customers)) {
+                kycCounts.verified = customers.filter(c => c.kycStatus === 'verified').length;
+                kycCounts.pending = customers.filter(c => c.kycStatus === 'pending').length;
+                kycCounts.rejected = customers.filter(c => c.kycStatus === 'rejected').length;
+            }
+
+            if (kycChart) kycChart.destroy();
+            const kycCtx = kycChartEl.getContext('2d');
+            kycChart = new Chart(kycCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Verified', 'Pending', 'Rejected'],
+                    datasets: [{
+                        data: [kycCounts.verified, kycCounts.pending, kycCounts.rejected],
+                        backgroundColor: ['#10B981', '#FFA500', '#EF4444'],
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            // Category Distribution
+            const categoryCounts = {};
+            if (applications && Array.isArray(applications)) {
+                applications.forEach(app => {
+                    const cat = (app.loanId && app.loanId.category) ? app.loanId.category : 'Other';
+                    categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+                });
+            }
+
+            if (categoryChart) categoryChart.destroy();
+            const categoryCtx = categoryChartEl.getContext('2d');
+            categoryChart = new Chart(categoryCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(categoryCounts),
+                    datasets: [{
+                        label: 'Number of Loans',
+                        data: Object.values(categoryCounts),
+                        backgroundColor: '#3B82F6',
+                        borderColor: '#1E40AF',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            // Monthly Disbursement Trend
+            const monthlyData = generateMonthlyData(applications);
+            if (disbursementChart) disbursementChart.destroy();
+            const disbursementCtx = disbursementChartEl.getContext('2d');
+            disbursementChart = new Chart(disbursementCtx, {
+                type: 'line',
+                data: {
+                    labels: monthlyData.labels,
+                    datasets: [{
+                        label: 'Disbursement (₹)',
+                        data: monthlyData.amounts,
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#10B981'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: function(value) {
+                                    return '₹' + (value / 100000).toFixed(0) + 'L';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function generateMonthlyData(applications) {
+            const monthlyTotals = {};
+            
+            if (!applications || !Array.isArray(applications)) {
+                return {
+                    labels: ['No Data'],
+                    amounts: [0]
+                };
+            }
+
+            const activeApps = applications.filter(a => a.status === 'active' || a.status === 'closed');
+
+            activeApps.forEach(app => {
+                if (app.createdAt) {
+                    const date = new Date(app.createdAt);
+                    const monthKey = date.toLocaleString('default', { month: 'short', year: '2-digit' });
+                    monthlyTotals[monthKey] = (monthlyTotals[monthKey] || 0) + (app.loanAmount || 0);
+                }
+            });
+
+            const sortedMonths = Object.keys(monthlyTotals).sort();
+            return {
+                labels: sortedMonths.length > 0 ? sortedMonths : ['No Data'],
+                amounts: sortedMonths.length > 0 ? sortedMonths.map(m => monthlyTotals[m]) : [0]
+            };
+        }
+
+        function exportReport() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            const reportData = [
+                ['MicroFinance System - Analytics Report'],
+                [`Generated: ${new Date().toLocaleString()}`],
+                [`Period: ${startDate} to ${endDate}`],
+                [],
+                ['KEY METRICS'],
+                ['Total Disbursed', document.getElementById('totalDisbursed').textContent],
+                ['Interest Revenue', document.getElementById('totalRevenue').textContent],
+                ['Approval Rate', document.getElementById('approvalRate').textContent],
+                ['Average Loan', document.getElementById('avgLoan').textContent],
+                [],
+                ['APPLICATIONS SUMMARY'],
+                ['Submitted', document.getElementById('submittedApps').textContent],
+                ['Approved', document.getElementById('approvedApps').textContent],
+                ['Rejected', document.getElementById('rejectedApps').textContent],
+                [],
+                ['CUSTOMER METRICS'],
+                ['Total Customers', document.getElementById('metricTotalCustomers').textContent],
+                ['KYC Verified', document.getElementById('metricVerified').textContent],
+                ['Active Loans', document.getElementById('metricActiveLoans').textContent]
+            ];
+
+            const csv = reportData.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `analytics_report_${Date.now()}.csv`;
+            a.click();
+        }
+
+        function logout() {
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('admin');
+            window.location.href = '/admin/login';
+        }
+
+        // Mobile menu toggle
+        document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('mobileOverlay').classList.toggle('active');
+        });
+
+        document.getElementById('mobileOverlay').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.remove('active');
+            document.getElementById('mobileOverlay').classList.remove('active');
+        });
+    </script>
+    <script src="/js/notifications.js"></script>
+    <script src="/js/main.js"></script>
+</body>
+</html>

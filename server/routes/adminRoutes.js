@@ -64,6 +64,13 @@ router.put(
 router.get('/applications', checkPermission('view-analytics'), adminController.getAllApplications);
 
 /**
+ * GET /api/admin/applications/:id
+ * Get single loan application
+ * Requires: view-analytics permission
+ */
+router.get('/applications/:id', checkPermission('view-analytics'), adminController.getSingleApplication);
+
+/**
  * PUT /api/admin/application/:id/approve
  * Approve loan application
  * Requires: approve-loans permission

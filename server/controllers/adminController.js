@@ -268,6 +268,38 @@ const getAllApplications = async (req, res) => {
 };
 
 /**
+ * GET /api/admin/applications/:id
+ * Get single loan application details
+ * Protected: Admin only
+ */
+const getSingleApplication = async (req, res) => {
+  try {
+    const application = await LoanApplication.findById(req.params.id)
+      .populate('customerId', 'firstName lastName email phoneNumber kycStatus')
+      .populate('loanId', 'name category');
+
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: 'Application not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Application retrieved',
+      data: application,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch application',
+      error: error.message,
+    });
+  }
+};
+
+/**
  * PUT /api/admin/application/:id/approve
  * Approve loan application
  * Protected: Admin with approve-loans permission
@@ -420,6 +452,7 @@ module.exports = {
   getCustomerDetails,
   verifyKYC,
   getAllApplications,
+  getSingleApplication,
   approveLoanApplication,
   rejectLoanApplication,
   activateLoan,
