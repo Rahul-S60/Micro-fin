@@ -31,7 +31,7 @@ router.put(
     body('firstName').optional().trim().isLength({ min: 2 }),
     body('lastName').optional().trim().isLength({ min: 2 }),
     body('phone').optional().matches(/^[0-9]{10}$/),
-    body('monthlyIncome').optional().isFloat({ min: 0 }),
+    body('monthlyIncome').optional().isFloat({ min: 0, max: 10000000 }),
   ],
   customerController.updateProfile
 );

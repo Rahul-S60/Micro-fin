@@ -231,6 +231,35 @@ const applyForLoan = async (req, res) => {
       status: 'pending',
     });
 
+    // Attach provided Aadhar/PAN as document placeholders if present
+    const docs = loanApplication.documents || [];
+    if (req.body.aadharNumber) {
+      docs.push({ name: 'Aadhar', url: null, value: req.body.aadharNumber });
+    }
+    if (req.body.panNumber) {
+      docs.push({ name: 'PAN', url: null, value: req.body.panNumber });
+    }
+
+    // Handle uploaded files (multer will populate req.files)
+    if (req.files) {
+      // Expect fields: aadharFile, panFile, otherFiles (array)
+      if (req.files.aadharFile && req.files.aadharFile[0]) {
+        const f = req.files.aadharFile[0];
+        docs.push({ name: 'Aadhar Document', url: `/uploads/documents/${f.filename}` });
+      }
+      if (req.files.panFile && req.files.panFile[0]) {
+        const f = req.files.panFile[0];
+        docs.push({ name: 'PAN Document', url: `/uploads/documents/${f.filename}` });
+      }
+      if (req.files.otherFiles && req.files.otherFiles.length) {
+        req.files.otherFiles.forEach(f => {
+          docs.push({ name: f.originalname, url: `/uploads/documents/${f.filename}` });
+        });
+      }
+    }
+
+    if (docs.length) loanApplication.documents = docs;
+
     // Calculate EMI
     loanApplication.calculateEMI();
     await loanApplication.save();

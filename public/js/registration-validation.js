@@ -15,6 +15,20 @@ document.addEventListener('DOMContentLoaded', function() {
     confirmPasswordInput.addEventListener('input', validatePasswordMatch);
   }
 
+  // Restrict name, city and state fields to letters and spaces only (real-time)
+  const nameInputs = document.querySelectorAll('input[name="firstName"], input[name="lastName"], input[name="city"], input[name="state"]');
+  nameInputs.forEach(input => {
+    input.addEventListener('input', () => {
+      input.value = input.value.replace(/[^A-Za-z\s]/g, '');
+    });
+    input.addEventListener('keypress', (e) => {
+      const char = String.fromCharCode(e.which || e.keyCode);
+      if (!/[A-Za-z\s]/.test(char)) {
+        e.preventDefault();
+      }
+    });
+  });
+
   // Real-time email validation
   if (emailInput) {
     emailInput.addEventListener('blur', validateEmailField);
@@ -23,7 +37,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Real-time phone validation
   if (phoneInput) {
-    phoneInput.addEventListener('input', validatePhoneField);
+    // Ensure only digits can be entered (real-time)
+    phoneInput.addEventListener('input', (e) => {
+      const cleaned = e.target.value.replace(/\D/g, '');
+      if (e.target.value !== cleaned) e.target.value = cleaned;
+      validatePhoneField(e);
+    });
+    phoneInput.addEventListener('keypress', (e) => {
+      const char = String.fromCharCode(e.which || e.keyCode);
+      if (!/\d/.test(char)) {
+        e.preventDefault();
+      }
+    });
+  }
+
+  // Real-time pincode: allow only digits and limit to 6 characters
+  const pincodeInput = document.querySelector('input[name="pincode"]');
+  if (pincodeInput) {
+    pincodeInput.addEventListener('input', (e) => {
+      const cleaned = e.target.value.replace(/\D/g, '').slice(0, 6);
+      if (e.target.value !== cleaned) e.target.value = cleaned;
+    });
+    pincodeInput.addEventListener('keypress', (e) => {
+      const char = String.fromCharCode(e.which || e.keyCode);
+      if (!/\d/.test(char)) {
+        e.preventDefault();
+      }
+    });
   }
 
   // Form submission

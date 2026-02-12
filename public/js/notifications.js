@@ -337,15 +337,40 @@ class NotificationManager {
 // Global instance
 const notificationManager = new NotificationManager();
 
-// Convenience functions
-const showNotification = {
-  success: (title, message, options) => notificationManager.success(title, message, options),
-  error: (title, message, options) => notificationManager.error(title, message, options),
-  warning: (title, message, options) => notificationManager.warning(title, message, options),
-  info: (title, message, options) => notificationManager.info(title, message, options),
-  loading: (title, message, options) => notificationManager.loading(title, message, options),
-  pending: (title, message, options) => notificationManager.pending(title, message, options),
-  progress: (title, percentage, message) => notificationManager.progress(title, percentage, message),
-  updateProgress: (id, percentage, message) => notificationManager.updateProgress(id, percentage, message),
-  closeAll: () => notificationManager.closeAll()
+// Convenience functions with unified interface
+const showNotification = function(titleOrMessage, typeOrMessage, messageOrOptions) {
+  // Handle both old signature: showNotification(message, type, title)
+  // and new signature: showNotification.success(title, message)
+  
+  // If called as function (legacy mode): showNotification(message, type, title)
+  if (typeof titleOrMessage === 'string' && typeof typeOrMessage === 'string') {
+    const message = titleOrMessage;
+    const type = typeOrMessage || 'info';
+    const title = messageOrOptions || '';
+    const notifTitle = title || (type === 'success' ? 'Success' : type === 'error' ? 'Error' : type === 'warning' ? 'Warning' : 'Info');
+    
+    switch(type.toLowerCase()) {
+      case 'success':
+        return notificationManager.success(notifTitle, message);
+      case 'error':
+        return notificationManager.error(notifTitle, message);
+      case 'warning':
+        return notificationManager.warning(notifTitle, message);
+      case 'loading':
+        return notificationManager.loading(notifTitle, message);
+      default:
+        return notificationManager.info(notifTitle, message);
+    }
+  }
 };
+
+// Add methods to function object
+showNotification.success = (title, message, options) => notificationManager.success(title, message, options);
+showNotification.error = (title, message, options) => notificationManager.error(title, message, options);
+showNotification.warning = (title, message, options) => notificationManager.warning(title, message, options);
+showNotification.info = (title, message, options) => notificationManager.info(title, message, options);
+showNotification.loading = (title, message, options) => notificationManager.loading(title, message, options);
+showNotification.pending = (title, message, options) => notificationManager.pending(title, message, options);
+showNotification.progress = (title, percentage, message) => notificationManager.progress(title, percentage, message);
+showNotification.updateProgress = (id, percentage, message) => notificationManager.updateProgress(id, percentage, message);
+showNotification.closeAll = () => notificationManager.closeAll();

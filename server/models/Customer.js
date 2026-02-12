@@ -82,11 +82,51 @@ const customerSchema = new mongoose.Schema(
       match: [/^[A-Z0-9]{10}$/, 'PAN number must be 10 alphanumeric characters'],
     },
 
+    // KYC uploaded documents (optional)
+    kycDocuments: [
+      {
+        name: String,
+        url: String,
+        value: String,
+        uploadDate: {
+          type: Date,
+          default: Date.now,
+        },
+        verification: {
+          status: {
+            type: String,
+            enum: ['pending', 'verified', 'rejected'],
+            default: 'pending',
+          },
+          verifiedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Admin',
+            default: null,
+          },
+          verifiedAt: {
+            type: Date,
+            default: null,
+          },
+          remarks: {
+            type: String,
+            default: '',
+          },
+        },
+      },
+    ],
+
+    // Quick flag when all documents are verified
+    documentsVerified: {
+      type: Boolean,
+      default: false,
+    },
+
     // Financial Information
     monthlyIncome: {
       type: Number,
       required: true,
       min: [0, 'Monthly income cannot be negative'],
+      max: [10000000, 'Monthly income cannot exceed 10000000'],
     },
     occupation: {
       type: String,

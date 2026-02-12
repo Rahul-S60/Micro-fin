@@ -39,7 +39,9 @@ router.post(
     body('pincode')
       .matches(/^[0-9]{6}$/)
       .withMessage('Pincode must be 6 digits'),
-    body('monthlyIncome').isFloat({ min: 0 }).withMessage('Monthly income must be a positive number'),
+    body('monthlyIncome')
+      .isFloat({ min: 0, max: 10000000 })
+      .withMessage('Monthly income must be a positive number and no greater than 10000000'),
     body('occupation').trim().notEmpty().withMessage('Occupation is required'),
     body('employmentType')
       .isIn(['salaried', 'self-employed', 'business', 'retired', 'other'])

@@ -200,8 +200,10 @@
                             class="form-control"
                             placeholder="Enter 6-digit pincode (e.g., 400001)"
                             pattern="[0-9]{6}"
+                            inputmode="numeric"
                             maxlength="6"
                             title="Pincode must be exactly 6 digits"
+                            onkeypress="return event.charCode >= 48 && event.charCode <= 57"
                             required
                         >
                         <p class="helper-text">Only 6 digits allowed</p>

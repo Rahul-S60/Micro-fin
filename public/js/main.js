@@ -71,10 +71,11 @@ function logout(isAdmin = false) {
 }
 
 /**
- * Show notification
+ * Show notification - LEGACY WRAPPER
  * Uses enhanced notification manager if available, falls back to simple notification
+ * Note: Prefer using notificationManager directly or showNotification object from notifications.js
  */
-function showNotification(message, type = 'info', title = '') {
+function showNotificationLegacy(message, type = 'info', title = '') {
   // Use notification manager if loaded
   if (typeof notificationManager !== 'undefined') {
     const notifTitle = title || (type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Info');
@@ -104,6 +105,11 @@ function showNotification(message, type = 'info', title = '') {
   setTimeout(() => {
     notification.remove();
   }, 3000);
+}
+
+// Backward compatibility alias
+if (typeof showNotification === 'undefined') {
+  window.showNotification = showNotificationLegacy;
 }
 
 /**

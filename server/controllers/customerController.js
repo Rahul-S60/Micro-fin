@@ -137,8 +137,9 @@ const getDashboard = async (req, res) => {
       status: 'active',
     });
 
+    const mongoose = require('mongoose');
     const totalBorrowed = await LoanApplication.aggregate([
-      { $match: { customerId: require('mongoose').Types.ObjectId(req.user.id) } },
+      { $match: { customerId: new mongoose.Types.ObjectId(req.user.id) } },
       { $group: { _id: null, total: { $sum: '$loanAmount' } } },
     ]);
 

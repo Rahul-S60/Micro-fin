@@ -144,7 +144,7 @@
                 <!-- Dynamic Apply Form (shown when a product is selected) -->
                 <div id="applyLoanFormContainer" class="card-ghost mb-6 hidden">
                     <h3 class="text-lg font-bold text-slate-900 mb-4">Application Details</h3>
-                    <form id="applyLoanForm" class="space-y-4">
+                    <form id="applyLoanForm" class="space-y-4" enctype="multipart/form-data">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-2">Selected Product</label>
@@ -168,6 +168,7 @@
                                 <input type="text" id="applyPurpose" class="form-control" placeholder="e.g., Business expansion" required>
                             </div>
                         </div>
+                        <div id="additionalRequirements" class="mt-4"></div>
                         <div>
                             <span class="form-error" id="applyError"></span>
                         </div>
@@ -616,7 +617,7 @@
                                 <p class="text-sm"><strong>Tenure:</strong> ${loan.minTenureMonths}-${loan.maxTenureMonths} months</p>
                                 <p class="text-xs text-gray-700"><strong>Eligibility:</strong> Min income ₹${(loan.minMonthlyIncome || 0).toLocaleString()} • Age ${loan.minAge || 0}-${loan.maxAge || 0} • Credit score ${loan.requiredCreditScore && loan.requiredCreditScore > 0 ? '≥ ' + loan.requiredCreditScore : 'not required'}</p>
                             </div>
-                            <button class="btn btn-primary w-full" onclick="applyForLoan('${loan._id}')">
+                            <button class="btn btn-primary w-full apply-now-btn" data-loan-id="${loan._id}">
                                 <i class="fas fa-check"></i> Apply Now
                             </button>
                         </div>
@@ -632,17 +633,23 @@
         }
 
         // Apply for loan - navigate to apply section
-        function applyForLoan(loanId) {
+        async function applyForLoan(loanId) {
             showSection('apply-loan');
             // Scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' });
             // Prefill the application form with selected loan
             if (loanId) {
-                setTimeout(() => {
-                    if (typeof startLoanApplicationFromId === 'function') {
-                        startLoanApplicationFromId(loanId);
-                    }
-                }, 300);
+                // Wait for loans to load before trying to start application
+                if (!window.availableLoans) {
+                    console.log('Loans not loaded yet, waiting...');
+                    await loadApplyLoan();
+                }
+                // Now start the application
+                if (typeof startLoanApplicationFromId === 'function') {
+                    startLoanApplicationFromId(loanId);
+                } else {
+                    console.error('startLoanApplicationFromId function not found');
+                }
             }
         }
 
@@ -696,7 +703,7 @@
                         <div class="card-ghost text-center py-12">
                             <i class="fas fa-inbox text-5xl text-gray-300 mb-4"></i>
                             <p class="text-gray-600 mb-4">You haven't applied for any loans yet</p>
-                            <button class="btn btn-primary" onclick="showSection('apply-loan')">
+                            <button class="btn btn-primary show-apply-section-btn">
                                 <i class="fas fa-plus"></i> Apply for Your First Loan
                             </button>
                         </div>
@@ -753,7 +760,7 @@
                                         </ul>
                                         ` : ''}
                                     </div>
-                                    <button class="btn btn-primary w-full" onclick="startLoanApplicationFromId('${loan._id}')">
+                                    <button class="btn btn-primary w-full apply-for-loan-btn" data-loan-id="${loan._id}">
                                         <i class="fas fa-paper-plane"></i> Apply for This Loan
                                     </button>
                                 </div>
@@ -772,13 +779,77 @@
 
         // Application UI helpers
         let selectedLoan = null;
-        function startLoanApplicationFromId(id) {
-            if (!window.availableLoans) return;
+        
+        // Wrapper function for onclick handlers (non-async)
+        function handleApplyClick(loanId) {
+            console.log('=== Apply Button Clicked ===');
+            console.log('Loan ID:', loanId);
+            console.log('Current section:', document.querySelector('.dashboard-section.active')?.id);
+            
+            // Show loading feedback
+            const button = event?.target?.closest('button');
+            if (button) {
+                const originalHTML = button.innerHTML;
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+                
+                startLoanApplicationFromId(loanId)
+                    .then(() => {
+                        console.log('Application form loaded successfully');
+                    })
+                    .catch(err => {
+                        console.error('Error in startLoanApplicationFromId:', err);
+                        if (typeof showNotification !== 'undefined') {
+                            showNotification('Error starting application', 'error', 'Error');
+                        }
+                        button.disabled = false;
+                        button.innerHTML = originalHTML;
+                    });
+            } else {
+                startLoanApplicationFromId(loanId).catch(err => {
+                    console.error('Error in startLoanApplicationFromId:', err);
+                    if (typeof showNotification !== 'undefined') {
+                        showNotification('Error starting application', 'error', 'Error');
+                    }
+                });
+            }
+        }
+        
+        async function startLoanApplicationFromId(id) {
+            console.log('Apply button clicked for loan ID:', id);
+            console.log('Available loans:', window.availableLoans);
+            if (!window.availableLoans) {
+                console.error('No available loans loaded yet');
+                if (typeof showNotification !== 'undefined') {
+                    showNotification('Please wait while loan products are loading...', 'warning', 'Loading');
+                }
+                // Try to load loans first
+                await loadApplyLoan();
+                // Retry after loading
+                if (!window.availableLoans) {
+                    console.error('Still no loans after loading');
+                    if (typeof showNotification !== 'undefined') {
+                        showNotification('Failed to load loan products', 'error', 'Error');
+                    }
+                    return;
+                }
+            }
             const loan = window.availableLoans.find(l => l._id === id);
-            if (!loan) return;
+            if (!loan) {
+                console.error('Loan not found:', id);
+                if (typeof showNotification !== 'undefined') {
+                    showNotification('Loan product not found', 'error', 'Error');
+                }
+                return;
+            }
             selectedLoan = loan;
+            console.log('Starting loan application for:', loan.name);
             // Populate form
             const formWrap = document.getElementById('applyLoanFormContainer');
+            if (!formWrap) {
+                console.error('Form container not found');
+                return;
+            }
             document.getElementById('selectedLoanName').value = `${loan.name}`;
             document.getElementById('selectedLoanMeta').textContent = `${loan.category} • ${loan.annualInterestRate}% p.a.`;
             const amountEl = document.getElementById('applyAmount');
@@ -793,9 +864,70 @@
             document.getElementById('tenureHint').textContent = `Allowed range: ${loan.minTenureMonths}-${loan.maxTenureMonths} months`;
             document.getElementById('applyPurpose').value = loan.name || '';
             document.getElementById('applyError').textContent = '';
+            console.log('Form populated, rendering requirements...');
+            // Render additional requirement inputs if the product lists requirements
+            const reqWrap = document.getElementById('additionalRequirements');
+            reqWrap.innerHTML = '';
+            if (loan.requirements && loan.requirements.length) {
+                const items = loan.requirements.map(r => r.toLowerCase());
+                // Start grid
+                reqWrap.innerHTML += `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
+                // Aadhar number + file
+                if (items.some(x => x.includes('aadhar'))) {
+                    reqWrap.innerHTML += `
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Aadhar Number</label>
+                            <input type="text" name="aadharNumber" id="aadharNumber" class="form-control" pattern="[0-9]{12}" maxlength="12" placeholder="Enter 12-digit Aadhar">
+                            <p class="text-xs text-gray-500 mt-1">Or upload Aadhar document</p>
+                            <input type="file" name="aadharFile" id="aadharFile" class="mt-2" accept=".pdf,image/*">
+                        </div>
+                    `;
+                }
+
+                // PAN number + file
+                if (items.some(x => x.includes('pan'))) {
+                    reqWrap.innerHTML += `
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">PAN Number</label>
+                            <input type="text" name="panNumber" id="panNumber" class="form-control" maxlength="10" placeholder="Enter PAN (ABCDE1234F)">
+                            <p class="text-xs text-gray-500 mt-1">Or upload PAN document</p>
+                            <input type="file" name="panFile" id="panFile" class="mt-2" accept=".pdf,image/*">
+                        </div>
+                    `;
+                }
+
+                reqWrap.innerHTML += `</div>`;
+
+                // Generic other documents
+                const otherReqs = loan.requirements.filter(r => !/aadhar|pan/i.test(r));
+                if (otherReqs.length) {
+                    reqWrap.innerHTML += `
+                        <div class="mt-3 text-sm text-gray-700">
+                            <p class="font-semibold">Additional documents required:</p>
+                            <ul class="list-disc pl-5 text-xs text-gray-600">
+                                ${otherReqs.map(r => `<li>${r}</li>`).join('')}
+                            </ul>
+                            <p class="mt-2 text-xs text-gray-500">You may attach up to 5 additional documents here:</p>
+                            <input type="file" name="otherFiles" id="otherFiles" class="mt-2" multiple accept=".pdf,image/*">
+                        </div>
+                    `;
+                }
+            }
+            console.log('Showing form container...');
             formWrap.classList.remove('hidden');
+            console.log('Form should now be visible. Classes:', formWrap.className);
+            
+            // Visual confirmation
+            if (typeof showNotification !== 'undefined') {
+                showNotification(`Ready to apply for ${loan.name}`, 'success', 'Application Form Loaded');
+            }
+            
             // Scroll into view
-            formWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            setTimeout(() => {
+                formWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+            
+            return true; // Success
         }
 
         document.getElementById('cancelApplyBtn').addEventListener('click', () => {
@@ -832,18 +964,42 @@
                 : null;
 
             try {
+                // Build FormData to include files if provided
+                const formElement = document.getElementById('applyLoanForm');
+                const formData = new FormData();
+                formData.append('loanId', selectedLoan._id);
+                formData.append('loanAmount', amount);
+                formData.append('tenureMonths', tenure);
+                formData.append('purpose', purpose);
+
+                // Optional fields
+                const aadharNumberEl = document.getElementById('aadharNumber');
+                const panNumberEl = document.getElementById('panNumber');
+                if (aadharNumberEl && aadharNumberEl.value.trim()) formData.append('aadharNumber', aadharNumberEl.value.trim());
+                if (panNumberEl && panNumberEl.value.trim()) formData.append('panNumber', panNumberEl.value.trim());
+
+                // Files
+                const aadharFileEl = document.getElementById('aadharFile');
+                const panFileEl = document.getElementById('panFile');
+                const otherFilesEl = document.getElementById('otherFiles');
+                if (aadharFileEl && aadharFileEl.files && aadharFileEl.files[0]) {
+                    formData.append('aadharFile', aadharFileEl.files[0]);
+                }
+                if (panFileEl && panFileEl.files && panFileEl.files[0]) {
+                    formData.append('panFile', panFileEl.files[0]);
+                }
+                if (otherFilesEl && otherFilesEl.files && otherFilesEl.files.length) {
+                    for (let i = 0; i < otherFilesEl.files.length; i++) {
+                        formData.append('otherFiles', otherFilesEl.files[i]);
+                    }
+                }
+
                 const res = await fetch('/api/loans/apply', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({
-                        loanId: selectedLoan._id,
-                        loanAmount: amount,
-                        tenureMonths: tenure,
-                        purpose
-                    })
+                    body: formData
                 });
                 const result = await res.json();
                 if (applyingToast && typeof notificationManager !== 'undefined') applyingToast.update({ type: 'success', title: 'Submitted', message: result.message || 'Application submitted.' });
@@ -1034,6 +1190,30 @@
             } catch (error) {
                 console.error('Error updating profile:', error);
                 document.getElementById('profileError').textContent = 'Failed to update profile. Please try again.';
+            }
+        });
+
+        // Event delegation for dynamically created buttons (CSP compliant)
+        document.addEventListener('click', (e) => {
+            // Apply Now buttons from loan list
+            if (e.target.closest('.apply-now-btn')) {
+                const loanId = e.target.closest('.apply-now-btn').dataset.loanId;
+                if (loanId) {
+                    applyForLoan(loanId);
+                }
+            }
+            
+            // Apply for This Loan buttons
+            if (e.target.closest('.apply-for-loan-btn')) {
+                const loanId = e.target.closest('.apply-for-loan-btn').dataset.loanId;
+                if (loanId) {
+                    handleApplyClick(loanId);
+                }
+            }
+            
+            // Show apply section buttons
+            if (e.target.closest('.show-apply-section-btn')) {
+                showSection('apply-loan');
             }
         });
 

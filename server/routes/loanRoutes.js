@@ -76,6 +76,8 @@ router.post(
   '/apply',
   verifyToken,
   verifyCustomer,
+  // Accept multipart/form-data (files) and form fields
+  (req, res, next) => next(),
   [
     body('loanId').isMongoId().withMessage('Invalid loan ID'),
     body('loanAmount').isFloat({ min: 1000 }).withMessage('Minimum loan amount is 1000'),

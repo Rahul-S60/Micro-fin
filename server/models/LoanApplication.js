@@ -131,9 +131,31 @@ const loanApplicationSchema = new mongoose.Schema(
       {
         name: String,
         url: String,
+        value: String,
         uploadDate: {
           type: Date,
           default: Date.now,
+        },
+        // Verification metadata for each document
+        verification: {
+          status: {
+            type: String,
+            enum: ['pending', 'verified', 'rejected'],
+            default: 'pending',
+          },
+          verifiedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Admin',
+            default: null,
+          },
+          verifiedAt: {
+            type: Date,
+            default: null,
+          },
+          remarks: {
+            type: String,
+            default: '',
+          },
         },
       },
     ],

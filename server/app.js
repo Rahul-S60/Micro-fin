@@ -12,6 +12,7 @@ const authRoutes = require('./routes/authRoutes');
 const customerRoutes = require('./routes/customerRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const loanRoutes = require('./routes/loanRoutes');
+const upload = require('./middleware/uploadMiddleware');
 
 const app = express();
 
@@ -76,6 +77,21 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Loan Routes
+// Apply multer for loan apply route specifically before loan routes
+app.use('/api/loans/apply', (req, res, next) => {
+  const handler = upload.fields([
+    { name: 'aadharFile', maxCount: 1 },
+    { name: 'panFile', maxCount: 1 },
+    { name: 'otherFiles', maxCount: 5 }
+  ]);
+  handler(req, res, function (err) {
+    if (err) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    next();
+  });
+});
+
 app.use('/api/loans', loanRoutes);
 
 // ============================================

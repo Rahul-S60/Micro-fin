@@ -101,4 +101,28 @@ router.put(
  */
 router.put('/application/:id/activate', checkPermission('approve-loans'), adminController.activateLoan);
 
+/**
+ * PUT /api/admin/application/:id/documents/:docId/:action
+ * action = verify | reject
+ * Verify or reject a specific document attached to a loan application
+ */
+router.put(
+  '/application/:id/documents/:docId/:action',
+  checkPermission('approve-loans'),
+  [body('remarks').optional().isString()],
+  adminController.updateApplicationDocumentVerification
+);
+
+/**
+ * PUT /api/admin/customer/:id/documents/:docId/:action
+ * action = verify | reject
+ * Verify or reject a specific customer KYC document
+ */
+router.put(
+  '/customer/:id/documents/:docId/:action',
+  checkPermission('verify-kyc'),
+  [body('remarks').optional().isString()],
+  adminController.updateCustomerDocumentVerification
+);
+
 module.exports = router;

@@ -300,6 +300,96 @@ const getSingleApplication = async (req, res) => {
 };
 
 /**
+ * PUT /api/admin/application/:id/documents/:docId/verify
+ * PUT /api/admin/application/:id/documents/:docId/reject
+ * Verify or reject a specific document submitted with a loan application
+ * Protected: Admin with appropriate permission
+ */
+const updateApplicationDocumentVerification = async (req, res) => {
+  try {
+    const { action } = req.params; // 'verify' or 'reject'
+    const { docId } = req.params;
+    const appId = req.params.id;
+    const { remarks } = req.body;
+
+    if (!['verify', 'reject'].includes(action)) {
+      return res.status(400).json({ success: false, message: 'Invalid action' });
+    }
+
+    const application = await LoanApplication.findById(appId);
+    if (!application) {
+      return res.status(404).json({ success: false, message: 'Application not found' });
+    }
+
+    const doc = application.documents.id(docId) || application.documents.find(d => String(d._id) === String(docId));
+    if (!doc) {
+      return res.status(404).json({ success: false, message: 'Document not found' });
+    }
+
+    doc.verification.status = action === 'verify' ? 'verified' : 'rejected';
+    doc.verification.verifiedBy = req.user.id;
+    doc.verification.verifiedAt = new Date();
+    doc.verification.remarks = remarks || '';
+
+    await application.save();
+
+    return res.status(200).json({ success: true, message: `Document ${doc.name || doc.originalname || ''} ${doc.verification.status}`, data: { document: doc } });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to update document verification', error: error.message });
+  }
+};
+
+/**
+ * PUT /api/admin/customer/:id/documents/:docId/verify
+ * PUT /api/admin/customer/:id/documents/:docId/reject
+ * Verify or reject a specific KYC document for a customer
+ */
+const updateCustomerDocumentVerification = async (req, res) => {
+  try {
+    const { action } = req.params; // 'verify' or 'reject'
+    const { docId } = req.params;
+    const customerId = req.params.id;
+    const { remarks } = req.body;
+
+    if (!['verify', 'reject'].includes(action)) {
+      return res.status(400).json({ success: false, message: 'Invalid action' });
+    }
+
+    const customer = await Customer.findById(customerId);
+    if (!customer) {
+      return res.status(404).json({ success: false, message: 'Customer not found' });
+    }
+
+    const doc = customer.kycDocuments.id(docId) || customer.kycDocuments.find(d => String(d._id) === String(docId));
+    if (!doc) {
+      return res.status(404).json({ success: false, message: 'Document not found' });
+    }
+
+    doc.verification.status = action === 'verify' ? 'verified' : 'rejected';
+    doc.verification.verifiedBy = req.user.id;
+    doc.verification.verifiedAt = new Date();
+    doc.verification.remarks = remarks || '';
+
+    // Update customer's overall documentsVerified flag if all docs verified
+    const allVerified = customer.kycDocuments.length > 0 && customer.kycDocuments.every(d => d.verification.status === 'verified');
+    customer.documentsVerified = allVerified;
+    if (allVerified) {
+      customer.kycStatus = 'verified';
+      customer.isVerified = true;
+    } else if (action === 'reject') {
+      customer.kycStatus = 'rejected';
+      customer.isVerified = false;
+    }
+
+    await customer.save();
+
+    return res.status(200).json({ success: true, message: `Document ${doc.name || doc.originalname || ''} ${doc.verification.status}`, data: { document: doc, customer: customer.getPublicProfile() } });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to update customer document verification', error: error.message });
+  }
+};
+
+/**
  * PUT /api/admin/application/:id/approve
  * Approve loan application
  * Protected: Admin with approve-loans permission
@@ -456,4 +546,6 @@ module.exports = {
   approveLoanApplication,
   rejectLoanApplication,
   activateLoan,
+  updateApplicationDocumentVerification,
+  updateCustomerDocumentVerification,
 };
