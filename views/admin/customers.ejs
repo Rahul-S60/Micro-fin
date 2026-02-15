@@ -22,12 +22,19 @@
         <!-- Sidebar -->
         <aside class="sidebar-modern" id="sidebar">
             <div class="mb-8 flex items-center gap-3">
-                <div class="h-11 w-11 rounded-xl bg-white/10 flex items-center justify-center text-white">
-                    <i class="fas fa-shield-alt"></i>
-                </div>
+                <svg viewBox="0 0 200 200" class="h-11 w-11 flex-shrink-0">
+                    <circle cx="100" cy="100" r="98" fill="white" stroke="#cbd5e1" stroke-width="3"/>
+                    <text x="100" y="130" text-anchor="middle" fill="#5a7d9a" font-size="90" font-weight="500" font-family="sans-serif">N</text>
+                    <path d="M 60 155 Q 85 155, 135 105" fill="transparent" stroke="#d9ead3" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M 65 145 Q 90 145, 140 95" fill="transparent" stroke="#93c47d" stroke-width="3" stroke-linecap="round"/>
+                    <g transform="translate(140, 95) rotate(-45)">
+                        <line x1="0" y1="0" x2="-15" y2="0" stroke="#93c47d" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="0" y1="0" x2="0" y2="15" stroke="#93c47d" stroke-width="3" stroke-linecap="round"/>
+                    </g>
+                </svg>
                 <div>
-                    <p class="text-xs text-white/70">Admin Portal</p>
-                    <h1 class="text-lg font-bold">MicroFinance</h1>
+                    <p class="text-xs text-slate-300 uppercase tracking-wider">Admin Portal</p>
+                    <h1 class="text-xl font-bold text-white tracking-wide">Navachethana</h1>
                 </div>
             </div>
 
@@ -173,7 +180,7 @@
         <div class="bg-white rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto">
             <div class="flex justify-between items-center p-6 border-b border-gray-200">
                 <h3 class="text-xl font-bold">Customer Details</h3>
-                <button onclick="closeCustomerModal()" class="text-gray-500 hover:text-gray-700">
+                <button id="closeCustomerModalBtn" class="text-gray-500 hover:text-gray-700">
                     <i class="fas fa-times text-2xl"></i>
                 </button>
             </div>
@@ -188,7 +195,7 @@
         <div class="bg-white rounded-lg max-w-md w-full">
             <div class="flex justify-between items-center p-6 border-b border-gray-200">
                 <h3 class="text-xl font-bold">KYC Verification</h3>
-                <button onclick="closeKYCModal()" class="text-gray-500 hover:text-gray-700">
+                <button id="closeKYCModalBtn" class="text-gray-500 hover:text-gray-700">
                     <i class="fas fa-times text-2xl"></i>
                 </button>
             </div>
@@ -206,10 +213,10 @@
                         <textarea id="kycRemarks" placeholder="Add any remarks..." class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3"></textarea>
                     </div>
                     <div class="flex gap-2 pt-4">
-                        <button onclick="submitKYCVerification()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition">
+                        <button id="submitKYCBtn" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition">
                             <i class="fas fa-check mr-2"></i> Submit
                         </button>
-                        <button onclick="closeKYCModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg transition">
+                        <button id="cancelKYCBtn" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg transition">
                             Cancel
                         </button>
                     </div>
@@ -347,10 +354,10 @@
                                 <td class="text-sm text-gray-600">${new Date(customer.createdAt).toLocaleDateString()}</td>
                                 <td>
                                     <div class="flex gap-2">
-                                        <button onclick="viewCustomer('${customer._id}')" class="text-indigo-600 hover:text-indigo-800" title="View Details">
+                                        <button data-action="view-customer" data-customer-id="${customer._id}" class="btn-view-customer text-indigo-600 hover:text-indigo-800" title="View Details">
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        ${customer.kycStatus === 'pending' ? `<button onclick="openKYCModal('${customer._id}')" class="text-green-600 hover:text-green-800" title="Verify KYC">
+                                        ${customer.kycStatus === 'pending' ? `<button data-action="open-kyc" data-customer-id="${customer._id}" class="btn-open-kyc text-green-600 hover:text-green-800" title="Verify KYC">
                                             <i class="fas fa-check-circle"></i>
                                         </button>` : ''}
                                     </div>
@@ -504,6 +511,41 @@
                 }
             }).catch(err => alert('Error exporting data'));
         }
+
+        // Event delegation for buttons
+        document.addEventListener('click', (e) => {
+            // Close Customer Modal
+            if (e.target.closest('#closeCustomerModalBtn')) {
+                closeCustomerModal();
+            }
+            
+            // Close KYC Modal
+            if (e.target.closest('#closeKYCModalBtn')) {
+                closeKYCModal();
+            }
+            
+            // Cancel KYC Modal
+            if (e.target.closest('#cancelKYCBtn')) {
+                closeKYCModal();
+            }
+            
+            // Submit KYC Verification
+            if (e.target.closest('#submitKYCBtn')) {
+                submitKYCVerification();
+            }
+            
+            // View Customer
+            if (e.target.closest('.btn-view-customer')) {
+                const customerId = e.target.closest('.btn-view-customer').dataset.customerId;
+                viewCustomer(customerId);
+            }
+            
+            // Open KYC Modal
+            if (e.target.closest('.btn-open-kyc')) {
+                const customerId = e.target.closest('.btn-open-kyc').dataset.customerId;
+                openKYCModal(customerId);
+            }
+        });
 
         // Mobile menu toggle
         document.getElementById('mobileMenuBtn').addEventListener('click', () => {

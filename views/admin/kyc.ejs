@@ -22,12 +22,19 @@
         <!-- Sidebar -->
         <aside class="sidebar-modern" id="sidebar">
             <div class="mb-8 flex items-center gap-3">
-                <div class="h-11 w-11 rounded-xl bg-white/10 flex items-center justify-center text-white">
-                    <i class="fas fa-shield-alt"></i>
-                </div>
+                <svg viewBox="0 0 200 200" class="h-11 w-11 flex-shrink-0">
+                    <circle cx="100" cy="100" r="98" fill="white" stroke="#cbd5e1" stroke-width="3"/>
+                    <text x="100" y="130" text-anchor="middle" fill="#5a7d9a" font-size="90" font-weight="500" font-family="sans-serif">N</text>
+                    <path d="M 60 155 Q 85 155, 135 105" fill="transparent" stroke="#d9ead3" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M 65 145 Q 90 145, 140 95" fill="transparent" stroke="#93c47d" stroke-width="3" stroke-linecap="round"/>
+                    <g transform="translate(140, 95) rotate(-45)">
+                        <line x1="0" y1="0" x2="-15" y2="0" stroke="#93c47d" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="0" y1="0" x2="0" y2="15" stroke="#93c47d" stroke-width="3" stroke-linecap="round"/>
+                    </g>
+                </svg>
                 <div>
-                    <p class="text-xs text-white/70">Admin Portal</p>
-                    <h1 class="text-lg font-bold">MicroFinance</h1>
+                    <p class="text-xs text-slate-300 uppercase tracking-wider">Admin Portal</p>
+                    <h1 class="text-xl font-bold text-white tracking-wide">Navachethana</h1>
                 </div>
             </div>
 
@@ -153,7 +160,7 @@
         <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center p-6 border-b border-gray-200 sticky top-0 bg-white">
                 <h3 class="text-xl font-bold" id="verificationTitle">Customer KYC</h3>
-                <button onclick="closeVerificationModal()" class="text-gray-500 hover:text-gray-700">
+                <button id="closeVerificationModalBtn" class="text-gray-500 hover:text-gray-700">
                     <i class="fas fa-times text-2xl"></i>
                 </button>
             </div>
@@ -168,7 +175,7 @@
         <div class="bg-white rounded-lg max-w-md w-full">
             <div class="flex justify-between items-center p-6 border-b border-gray-200">
                 <h3 class="text-xl font-bold" id="decisionTitle">Verify KYC</h3>
-                <button onclick="closeDecisionModal()" class="text-gray-500 hover:text-gray-700">
+                <button id="closeDecisionModalBtn" class="text-gray-500 hover:text-gray-700">
                     <i class="fas fa-times text-2xl"></i>
                 </button>
             </div>
@@ -187,10 +194,10 @@
                         <textarea id="decisionRemarks" placeholder="Enter remarks..." class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3"></textarea>
                     </div>
                     <div class="flex gap-2 pt-4 border-t border-gray-200">
-                        <button onclick="submitDecision()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition">
+                        <button id="submitDecisionBtn" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition">
                             <i class="fas fa-check mr-2"></i> Submit Decision
                         </button>
-                        <button onclick="closeDecisionModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg transition">
+                        <button id="cancelDecisionBtn" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg transition">
                             Cancel
                         </button>
                     </div>
@@ -204,7 +211,7 @@
         <div class="bg-white rounded-lg max-w-md w-full">
             <div class="flex justify-between items-center p-6 border-b border-gray-200">
                 <h3 class="text-xl font-bold" id="docRemarksTitle">Document Verification</h3>
-                <button onclick="closeDocRemarksModal()" class="text-gray-500 hover:text-gray-700">
+                <button id="closeDocRemarksModalBtn" class="text-gray-500 hover:text-gray-700">
                     <i class="fas fa-times text-2xl"></i>
                 </button>
             </div>
@@ -215,10 +222,10 @@
                         <textarea id="docRemarksInput" placeholder="Enter remarks..." class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3"></textarea>
                     </div>
                     <div class="flex gap-2 pt-4 border-t border-gray-200">
-                        <button onclick="submitDocRemarks()" class="flex-1 text-white px-4 py-2 rounded-lg transition" id="docRemarksBtn">
+                        <button id="submitDocRemarksBtn" class="flex-1 text-white px-4 py-2 rounded-lg transition">
                             Submit
                         </button>
-                        <button onclick="closeDocRemarksModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg transition">
+                        <button id="cancelDocRemarksBtn" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg transition">
                             Cancel
                         </button>
                     </div>
@@ -337,11 +344,11 @@
                                 <td class="text-sm text-gray-600">${new Date(customer.createdAt).toLocaleDateString()}</td>
                                 <td>
                                     <div class="flex gap-2">
-                                        <button onclick="viewKYC('${customer._id}')" class="text-indigo-600 hover:text-indigo-800 text-lg" title="View Details">
+                                        <button data-action="view-kyc" data-customer-id="${customer._id}" class="btn-view-kyc text-indigo-600 hover:text-indigo-800 text-lg" title="View Details">
                                             <i class="fas fa-eye"></i>
                                         </button>
                                         ${customer.kycStatus === 'pending' || customer.kycStatus === 'rejected' ? `
-                                            <button onclick="openDecisionModal('${customer._id}')" class="text-green-600 hover:text-green-800 text-lg" title="Verify/Reject">
+                                            <button data-action="open-decision" data-customer-id="${customer._id}" class="btn-open-decision text-green-600 hover:text-green-800 text-lg" title="Verify/Reject">
                                                 <i class="fas fa-check-double"></i>
                                             </button>
                                         ` : ''}
@@ -410,8 +417,8 @@
                                             <div class="flex items-center gap-3">
                                                 ${doc.url ? `<a href="${doc.url}" target="_blank" class="text-indigo-600 hover:underline" download>Download</a>` : `<span class="text-gray-500">No file uploaded</span>`}
                                                 <div>
-                                                    ${doc.verification?.status !== 'verified' ? `<button onclick="confirmCustomerDocAction('${customer._id}','${doc._id}','verify')" class="text-green-600 hover:text-green-800 ml-3" title="Verify"><i class="fas fa-check"></i></button>` : ''}
-                                                    ${doc.verification?.status !== 'rejected' ? `<button onclick="confirmCustomerDocAction('${customer._id}','${doc._id}','reject')" class="text-red-600 hover:text-red-800 ml-3" title="Reject"><i class="fas fa-times"></i></button>` : ''}
+                                                    ${doc.verification?.status !== 'verified' ? `<button data-action="verify-customer-doc" data-customer-id="${customer._id}" data-doc-id="${doc._id}" class="btn-verify-customer-doc text-green-600 hover:text-green-800 ml-3" title="Verify"><i class="fas fa-check"></i></button>` : ''}
+                                                    ${doc.verification?.status !== 'rejected' ? `<button data-action="reject-customer-doc" data-customer-id="${customer._id}" data-doc-id="${doc._id}" class="btn-reject-customer-doc text-red-600 hover:text-red-800 ml-3" title="Reject"><i class="fas fa-times"></i></button>` : ''}
                                                 </div>
                                             </div>
                                         </div>
@@ -492,7 +499,7 @@
             document.getElementById('docRemarksInput').placeholder = action === 'reject' ? 'Enter rejection reason (min 3 characters)...' : 'Enter remarks...';
             document.getElementById('docRemarksInput').value = '';
             
-            const btn = document.getElementById('docRemarksBtn');
+            const btn = document.getElementById('submitDocRemarksBtn');
             btn.textContent = action === 'verify' ? 'Verify' : 'Reject';
             btn.className = action === 'verify' 
                 ? 'flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition'
@@ -550,6 +557,72 @@
             localStorage.removeItem('admin');
             window.location.href = '/admin/login';
         }
+
+        // Event delegation for buttons
+        document.addEventListener('click', (e) => {
+            // Close Verification Modal
+            if (e.target.closest('#closeVerificationModalBtn')) {
+                closeVerificationModal();
+            }
+            
+            // Close Decision Modal
+            if (e.target.closest('#closeDecisionModalBtn')) {
+                closeDecisionModal();
+            }
+            
+            // Cancel Decision Modal
+            if (e.target.closest('#cancelDecisionBtn')) {
+                closeDecisionModal();
+            }
+            
+            // Submit Decision
+            if (e.target.closest('#submitDecisionBtn')) {
+                submitDecision();
+            }
+            
+            // Close Document Remarks Modal
+            if (e.target.closest('#closeDocRemarksModalBtn')) {
+                closeDocRemarksModal();
+            }
+            
+            // Cancel Document Remarks Modal
+            if (e.target.closest('#cancelDocRemarksBtn')) {
+                closeDocRemarksModal();
+            }
+            
+            // Submit Document Remarks
+            if (e.target.closest('#submitDocRemarksBtn')) {
+                submitDocRemarks();
+            }
+            
+            // View KYC
+            if (e.target.closest('.btn-view-kyc')) {
+                const customerId = e.target.closest('.btn-view-kyc').dataset.customerId;
+                viewKYC(customerId);
+            }
+            
+            // Open Decision Modal
+            if (e.target.closest('.btn-open-decision')) {
+                const customerId = e.target.closest('.btn-open-decision').dataset.customerId;
+                openDecisionModal(customerId);
+            }
+            
+            // Verify Customer Document
+            if (e.target.closest('.btn-verify-customer-doc')) {
+                const btn = e.target.closest('.btn-verify-customer-doc');
+                const customerId = btn.dataset.customerId;
+                const docId = btn.dataset.docId;
+                confirmCustomerDocAction(customerId, docId, 'verify');
+            }
+            
+            // Reject Customer Document
+            if (e.target.closest('.btn-reject-customer-doc')) {
+                const btn = e.target.closest('.btn-reject-customer-doc');
+                const customerId = btn.dataset.customerId;
+                const docId = btn.dataset.docId;
+                confirmCustomerDocAction(customerId, docId, 'reject');
+            }
+        });
 
         // Mobile menu toggle
         document.getElementById('mobileMenuBtn').addEventListener('click', () => {
