@@ -93,7 +93,6 @@ const getMyLoans = async (req, res) => {
   try {
     const loans = await LoanApplication.find({
       customerId: req.user.id,
-      status: { $in: ['approved', 'active', 'closed'] },
     })
       .populate('loanId', 'name category')
       .sort({ createdAt: -1 });

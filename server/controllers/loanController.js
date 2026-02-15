@@ -175,6 +175,11 @@ const updateLoan = async (req, res) => {
  */
 const applyForLoan = async (req, res) => {
   try {
+    console.log('=== applyForLoan called ===');
+    console.log('Request body:', req.body);
+    console.log('Request files:', req.files ? Object.keys(req.files) : 'No files');
+    console.log('User ID:', req.user?.id);
+
     const { loanId, loanAmount, tenureMonths, purpose } = req.body;
     const customerId = req.user.id;
 
@@ -287,10 +292,16 @@ const applyForLoan = async (req, res) => {
         : 'Application submitted • Under review',
     });
   } catch (error) {
+    console.error('=== Error in applyForLoan ===');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Error object:', error);
+    
     res.status(500).json({
       success: false,
       message: 'Failed to apply for loan',
       error: error.message,
+      details: error.toString(),
     });
   }
 };

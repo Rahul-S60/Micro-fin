@@ -77,21 +77,6 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Loan Routes
-// Apply multer for loan apply route specifically before loan routes
-app.use('/api/loans/apply', (req, res, next) => {
-  const handler = upload.fields([
-    { name: 'aadharFile', maxCount: 1 },
-    { name: 'panFile', maxCount: 1 },
-    { name: 'otherFiles', maxCount: 5 }
-  ]);
-  handler(req, res, function (err) {
-    if (err) {
-      return res.status(400).json({ success: false, message: err.message });
-    }
-    next();
-  });
-});
-
 app.use('/api/loans', loanRoutes);
 
 // ============================================
@@ -206,6 +191,40 @@ app.get('/admin/reports', (req, res) => {
   res.render('admin/reports', {
     title: 'Reports & Analytics - Admin',
   });
+});
+
+// ============================================
+// MULTER ERROR HANDLING
+// ============================================
+app.use((err, req, res, next) => {
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({
+      success: false,
+      message: 'File size exceeds 5MB limit',
+      error: err.message,
+    });
+  }
+  if (err.code === 'LIMIT_FILE_COUNT') {
+    return res.status(400).json({
+      success: false,
+      message: 'Too many files uploaded',
+      error: err.message,
+    });
+  }
+  if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+    return res.status(400).json({
+      success: false,
+      message: 'Unexpected file field',
+      error: err.message,
+    });
+  }
+  if (err.message && err.message.includes('Unsupported file type')) {
+    return res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+  next(err);
 });
 
 // ============================================

@@ -24,7 +24,7 @@ const loanApplicationSchema = new mongoose.Schema(
     applicationNumber: {
       type: String,
       unique: true,
-      required: true,
+      sparse: true,
       index: true,
     },
     loanAmount: {
@@ -182,13 +182,17 @@ const loanApplicationSchema = new mongoose.Schema(
  * Middleware: Generate application number before saving
  */
 loanApplicationSchema.pre('save', async function (next) {
-  if (!this.applicationNumber) {
-    const count = await mongoose.model('LoanApplication').countDocuments();
-    const year = new Date().getFullYear().toString().slice(-2);
-    const month = String(new Date().getMonth() + 1).padStart(2, '0');
-    this.applicationNumber = `APP-${year}${month}-${String(count + 1).padStart(5, '0')}`;
+  try {
+    if (!this.applicationNumber) {
+      // Use a simpler unique ID: timestamp + random number
+      const timestamp = Date.now();
+      const random = Math.floor(Math.random() * 10000);
+      this.applicationNumber = `APP-${timestamp}-${random}`;
+    }
+    next();
+  } catch (error) {
+    next(error);
   }
-  next();
 });
 
 /**

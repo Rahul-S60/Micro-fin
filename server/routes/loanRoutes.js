@@ -4,10 +4,11 @@
  */
 
 const express = require('express');
-const { body } = require('express-validator');
+const { body, validationResult } = require('express-validator');
 const loanController = require('../controllers/loanController');
 const { verifyToken, verifyCustomer, verifyAdmin } = require('../middleware/authMiddleware');
 const { checkPermission } = require('../middleware/roleMiddleware');
+const upload = require('../middleware/uploadMiddleware');
 
 const router = express.Router();
 
@@ -76,14 +77,57 @@ router.post(
   '/apply',
   verifyToken,
   verifyCustomer,
-  // Accept multipart/form-data (files) and form fields
-  (req, res, next) => next(),
+  (req, res, next) => {
+    // Multer 2.0 compatible file upload middleware with error handling
+    const fields = upload.fields([
+      { name: 'aadharFile', maxCount: 1 },
+      { name: 'panFile', maxCount: 1 },
+      { name: 'otherFiles', maxCount: 5 }
+    ]);
+    
+    fields(req, res, (err) => {
+      if (err) {
+        console.error('Multer error:', err.message);
+        return res.status(400).json({
+          success: false,
+          message: 'File upload error: ' + err.message,
+          code: err.code,
+        });
+      }
+      next();
+    });
+  },
   [
     body('loanId').isMongoId().withMessage('Invalid loan ID'),
-    body('loanAmount').isFloat({ min: 1000 }).withMessage('Minimum loan amount is 1000'),
-    body('tenureMonths').isInt({ min: 1 }).withMessage('Tenure must be at least 1 month'),
-    body('purpose').trim().isLength({ min: 5 }).withMessage('Purpose must be at least 5 characters'),
+    body('loanAmount')
+      .custom((value) => {
+        const num = parseFloat(value);
+        if (isNaN(num) || num < 1000) {
+          throw new Error('Minimum loan amount is 1000');
+        }
+        return true;
+      }),
+    body('tenureMonths')
+      .custom((value) => {
+        const num = parseInt(value);
+        if (isNaN(num) || num < 1) {
+          throw new Error('Tenure must be at least 1 month');
+        }
+        return true;
+      }),
+    body('purpose').trim().notEmpty().withMessage('Purpose is required').isLength({ min: 5 }).withMessage('Purpose must be at least 5 characters'),
   ],
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation errors',
+        errors: errors.array(),
+      });
+    }
+    next();
+  },
   loanController.applyForLoan
 );
 
