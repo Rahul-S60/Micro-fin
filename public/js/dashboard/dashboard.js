@@ -208,9 +208,7 @@ async function loadLoans() {
         const data = await response.json();
 
         if (data.success && data.data.length > 0) {
-            const microLoans = data.data.filter(l => (l.name || '').toLowerCase().includes('micro loan'));
-            const list = (microLoans.length > 0 ? microLoans : data.data).slice(0, 6);
-            const loansHtml = list.map(loan => `
+            const loansHtml = data.data.map(loan => `
                 <div class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
                     <div class="mb-4">
                         <h3 class="font-bold text-lg mb-1">${loan.name}</h3>

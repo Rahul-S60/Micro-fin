@@ -42,6 +42,13 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 // Static Files Middleware
 app.use(express.static(path.join(__dirname, '../public')));
 
+// Ensure uploads directory exists
+const uploadDir = path.join(__dirname, '../public/uploads/documents');
+require('fs').mkdirSync(uploadDir, { recursive: true });
+
+// Serve uploaded documents
+app.use('/uploads/documents', express.static(uploadDir));
+
 // View Engine Configuration
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../views'));
@@ -157,16 +164,13 @@ app.get('/admin/dashboard', (req, res) => {
   });
 });
 
+// Redirect all other admin pages to the main dashboard
 app.get('/admin/customers', (req, res) => {
-  res.render('admin/customers', {
-    title: 'Customers Management - Admin',
-  });
+  res.redirect('/admin/dashboard');
 });
 
 app.get('/admin/applications', (req, res) => {
-  res.render('admin/applications', {
-    title: 'Loan Applications - Admin',
-  });
+  res.redirect('/admin/dashboard');
 });
 
 app.get('/admin/loan-products', (req, res) => {
@@ -176,21 +180,14 @@ app.get('/admin/loan-products', (req, res) => {
 });
 
 app.get('/admin/kyc', (req, res) => {
-  res.render('admin/kyc', {
-    title: 'KYC Verification - Admin',
-  });
-});
-
-app.get('/admin/settings', (req, res) => {
-  res.render('admin/settings', {
-    title: 'Admin Settings',
-  });
+  res.redirect('/admin/dashboard');
 });
 
 app.get('/admin/reports', (req, res) => {
-  res.render('admin/reports', {
-    title: 'Reports & Analytics - Admin',
-  });
+  res.redirect('/admin/dashboard');
+});
+app.get('/admin/settings', (req, res) => {
+  res.redirect('/admin/dashboard');
 });
 
 // ============================================

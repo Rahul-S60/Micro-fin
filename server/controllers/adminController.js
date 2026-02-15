@@ -536,6 +536,86 @@ const activateLoan = async (req, res) => {
   }
 };
 
+/**
+ * PUT /api/admin/applications/:id
+ * Generic application status update (approve, reject, or mark under_review)
+ * Protected: Admin only
+ */
+const updateLoanApplication = async (req, res) => {
+  try {
+    const { status, remarks, rejectionReason } = req.body;
+
+    const application = await LoanApplication.findById(req.params.id);
+
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: 'Application not found',
+      });
+    }
+
+    // Validate status transition
+    const validStatuses = ['pending', 'under_review', 'approved', 'rejected'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status provided',
+      });
+    }
+
+    // Cannot change already rejected or completed applications
+    if (application.status === 'rejected') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot modify rejected applications',
+      });
+    }
+
+    // Update based on status
+    if (status === 'approved') {
+      if (application.status !== 'pending' && application.status !== 'under_review') {
+        return res.status(400).json({
+          success: false,
+          message: 'Only pending or under_review applications can be approved',
+        });
+      }
+      application.approveLoan(req.user.id);
+    } else if (status === 'rejected') {
+      if (application.status !== 'pending' && application.status !== 'under_review') {
+        return res.status(400).json({
+          success: false,
+          message: 'Only pending or under_review applications can be rejected',
+        });
+      }
+      application.rejectLoan(rejectionReason || remarks || 'Application rejected by admin');
+    } else if (status === 'under_review') {
+      if (application.status !== 'pending') {
+        return res.status(400).json({
+          success: false,
+          message: 'Only pending applications can be marked as under_review',
+        });
+      }
+      application.status = 'under_review';
+    }
+
+    // Save remarks
+    application.remarks = remarks || application.remarks || '';
+    await application.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Application status updated to ${status} successfully`,
+      data: application,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update application',
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getDashboard,
   getAllCustomers,
@@ -548,4 +628,4 @@ module.exports = {
   activateLoan,
   updateApplicationDocumentVerification,
   updateCustomerDocumentVerification,
-};
+  updateLoanApplication,};

@@ -6,6 +6,7 @@
 const express = require('express');
 const { body } = require('express-validator');
 const adminController = require('../controllers/adminController');
+const loanController = require('../controllers/loanController');
 const { verifyToken, verifyAdmin } = require('../middleware/authMiddleware');
 const { checkPermission } = require('../middleware/roleMiddleware');
 
@@ -41,6 +42,24 @@ router.get('/customers', checkPermission('manage-customers'), adminController.ge
 router.get('/customer/:id', checkPermission('manage-customers'), adminController.getCustomerDetails);
 
 /**
+ * LOAN PRODUCT MANAGEMENT ROUTES
+ */
+
+/**
+ * GET /api/admin/loans
+ * Get all loan products (including inactive)
+ * Requires: manage-customers permission
+ */
+router.get('/loans', checkPermission('manage-customers'), loanController.getAllLoansAdmin);
+
+/**
+ * DELETE /api/admin/loans/:id
+ * Delete loan product
+ * Requires: manage-customers permission
+ */
+router.delete('/loans/:id', checkPermission('manage-customers'), loanController.deleteLoan);
+
+/**
  * PUT /api/admin/customer/:id/kyc
  * Verify or reject customer KYC
  * Requires: verify-kyc permission
@@ -69,6 +88,22 @@ router.get('/applications', checkPermission('view-analytics'), adminController.g
  * Requires: view-analytics permission
  */
 router.get('/applications/:id', checkPermission('view-analytics'), adminController.getSingleApplication);
+
+/**
+ * PUT /api/admin/applications/:id
+ * Generic application status update (approve, reject, mark under_review)
+ * Requires: approve-loans permission
+ */
+router.put(
+  '/applications/:id',
+  checkPermission('approve-loans'),
+  [
+    body('status').optional().isIn(['pending', 'under_review', 'approved', 'rejected']),
+    body('remarks').optional().isString(),
+    body('rejectionReason').optional().isString()
+  ],
+  adminController.updateLoanApplication
+);
 
 /**
  * PUT /api/admin/application/:id/approve

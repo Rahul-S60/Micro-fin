@@ -1,0 +1,115 @@
+<!-- Dashboard Overview Section -->
+<section id="section-dashboard" class="dashboard-section">
+    <div class="content-topbar">
+        <div>
+            <p class="text-sm text-slate-500">Operations Control</p>
+            <h2 class="text-2xl font-bold text-slate-900">Dashboard</h2>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="relative hidden md:block">
+                <input type="text" placeholder="Search..." class="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="relative">
+                    <button data-action="toggle-notifications" class="text-gray-600 hover:text-gray-800 relative focus:outline-none">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span class="absolute -top-1 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center" id="notificationBadge">3</span>
+                    </button>
+                    <!-- Notifications Dropdown -->
+                    <div id="notificationsDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50 max-h-96 overflow-y-auto border border-gray-200">
+                        <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                            <h3 class="font-semibold text-gray-900">Notifications</h3>
+                            <button onclick="document.getElementById('notificationsDropdown').classList.add('hidden')" class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div id="notificationsList" class="divide-y divide-gray-100">
+                            <!-- Notifications will be populated here -->
+                            <div class="p-4 text-center text-gray-500">
+                                <p>No new notifications</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="h-10 w-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stat-grid mb-6">
+        <div class="stat-card-modern">
+            <div class="stat-number" id="totalCustomers">0</div>
+            <div class="stat-label">Total Customers</div>
+            <p class="text-xs text-white/70 mt-1"><i class="fas fa-arrow-up"></i> +5% this month</p>
+        </div>
+        <div class="stat-card-modern">
+            <div class="stat-number" id="pendingApplications">0</div>
+            <div class="stat-label">Pending Applications</div>
+            <p class="text-xs text-white/70 mt-1">Requires action</p>
+        </div>
+        <div class="stat-card-modern">
+            <div class="stat-number" id="activeLoans">0</div>
+            <div class="stat-label">Active Loans</div>
+            <p class="text-xs text-white/70 mt-1">Outstanding</p>
+        </div>
+        <div class="stat-card-modern">
+            <div class="stat-number" id="disbursedAmount">₹0</div>
+            <div class="stat-label">Amount Disbursed</div>
+            <p class="text-xs text-white/70 mt-1">Total portfolio</p>
+        </div>
+    </div>
+
+    <!-- Overview Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div class="card">
+            <h3 class="font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <i class="fas fa-users text-blue-600"></i> Customer Overview
+            </h3>
+            <div class="space-y-3">
+                <div class="flex justify-between">
+                    <span>Verified Customers</span>
+                    <span class="font-bold" id="verifiedCustomers">0</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded h-2 overflow-hidden">
+                    <div class="bg-blue-600 h-2" style="width: 70%"></div>
+                </div>
+                <div class="flex justify-between">
+                    <span>KYC Pending</span>
+                    <span class="font-bold text-orange-600" id="kycPendingCount">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 class="font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <i class="fas fa-chart-pie text-green-600"></i> Application Status
+            </h3>
+            <div class="space-y-3">
+                <div class="flex justify-between">
+                    <span>Approved</span>
+                    <span class="font-bold text-green-600" id="approvedCount">0</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Rejected</span>
+                    <span class="font-bold text-red-600" id="rejectedCount">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 class="font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <i class="fas fa-clock text-purple-600"></i> System Info
+            </h3>
+            <div class="space-y-3 text-sm text-gray-600">
+                <div>
+                    <p class="font-semibold text-gray-800" id="adminName">Admin Name</p>
+                    <p id="adminRole">Administrator</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

@@ -10,18 +10,43 @@ const notificationMessages = require('../utils/notificationMessages');
 
 /**
  * GET /api/loans
- * Get all active loan products
+ * Get all loan products
  * Public endpoint
  */
 const getAllLoans = async (req, res) => {
   try {
-    const loans = await Loan.find({ isActive: true })
+    const loans = await Loan.find({})
       .select('-createdBy -updatedAt')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
       message: 'Loans retrieved successfully',
+      count: loans.length,
+      data: loans,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch loans',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * GET /api/admin/loans
+ * Get all loan products (admin)
+ */
+const getAllLoansAdmin = async (req, res) => {
+  try {
+    const loans = await Loan.find({})
+      .select('-updatedAt')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      message: 'All loans retrieved successfully',
       count: loans.length,
       data: loans,
     });
@@ -163,6 +188,35 @@ const updateLoan = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update loan',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * DELETE /api/admin/loans/:id
+ * Delete loan product (admin)
+ */
+const deleteLoan = async (req, res) => {
+  try {
+    const loan = await Loan.findByIdAndDelete(req.params.id);
+
+    if (!loan) {
+      return res.status(404).json({
+        success: false,
+        message: 'Loan product not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Loan product deleted successfully',
+      data: loan,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete loan',
       error: error.message,
     });
   }
@@ -368,9 +422,11 @@ const getApplicationDetails = async (req, res) => {
 
 module.exports = {
   getAllLoans,
+  getAllLoansAdmin,
   getLoanById,
   createLoan,
   updateLoan,
+  deleteLoan,
   applyForLoan,
   getCustomerApplications,
   getApplicationDetails,
