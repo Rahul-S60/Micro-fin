@@ -83,6 +83,26 @@ const loanSchema = new mongoose.Schema(
     features: [String],
     requirements: [String],
 
+    // Required Documents for Application
+    requiredDocuments: [
+      {
+        name: {
+          type: String,
+          required: true,
+        },
+        description: String,
+        isRequired: {
+          type: Boolean,
+          default: true,
+        },
+        fileType: {
+          type: String,
+          enum: ['pdf', 'image', 'document', 'any'],
+          default: 'document',
+        },
+      },
+    ],
+
     // Admin Information
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,

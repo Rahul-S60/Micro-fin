@@ -288,6 +288,13 @@ const applyForLoan = async (req, res) => {
       purpose,
       interestRate: loan.annualInterestRate,
       status: 'pending',
+      // Personal information from application form
+      aadharNumber: req.body.aadharNumber || null,
+      panNumber: req.body.panNumber || null,
+      applicantAddress: req.body.address || null,
+      applicantPhone: req.body.phone || null,
+      applicantAge: req.body.age ? parseInt(req.body.age) : null,
+      applicantMonthlyIncome: req.body.monthlyIncome ? parseFloat(req.body.monthlyIncome) : null,
     });
 
     // Attach provided Aadhar/PAN as document placeholders if present
@@ -301,7 +308,7 @@ const applyForLoan = async (req, res) => {
 
     // Handle uploaded files (multer will populate req.files)
     if (req.files) {
-      // Expect fields: aadharFile, panFile, otherFiles (array)
+      // Expect fields: aadharFile, panFile, otherFiles (array), documents (array)
       if (req.files.aadharFile && req.files.aadharFile[0]) {
         const f = req.files.aadharFile[0];
         docs.push({ name: 'Aadhar Document', url: `/uploads/documents/${f.filename}` });
@@ -312,6 +319,12 @@ const applyForLoan = async (req, res) => {
       }
       if (req.files.otherFiles && req.files.otherFiles.length) {
         req.files.otherFiles.forEach(f => {
+          docs.push({ name: f.originalname, url: `/uploads/documents/${f.filename}` });
+        });
+      }
+      // Handle new documents field from required documents section
+      if (req.files.documents && req.files.documents.length) {
+        req.files.documents.forEach(f => {
           docs.push({ name: f.originalname, url: `/uploads/documents/${f.filename}` });
         });
       }

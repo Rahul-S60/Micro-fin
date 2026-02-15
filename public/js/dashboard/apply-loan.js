@@ -14,8 +14,7 @@ async function loadApplyLoan() {
         const data = await response.json();
 
         if (data.success && data.data.length > 0) {
-            const microLoans = data.data.filter(l => (l.name || '').toLowerCase().includes('micro loan'));
-            window.availableLoans = microLoans.length > 0 ? microLoans : data.data;
+            window.availableLoans = data.data;
             const html = `
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     ${window.availableLoans.map(loan => `
@@ -138,52 +137,173 @@ async function startLoanApplicationFromId(id) {
     if (applyPurposeEl) applyPurposeEl.value = loan.name || '';
     if (applyErrorEl) applyErrorEl.textContent = '';
     
-    // Render additional requirement inputs
+    // ============================================
+    // Render Required Documents Section
+    // ============================================
+    const docsSection = document.getElementById('documentsSection');
+    const docsContainer = document.getElementById('documentsContainer');
+    
+    if (docsSection && docsContainer) {
+        if (loan.requiredDocuments && loan.requiredDocuments.length > 0) {
+            docsSection.classList.remove('hidden');
+            docsContainer.innerHTML = '';
+            
+            loan.requiredDocuments.forEach((doc, idx) => {
+                const docId = `doc_${idx}_${doc.name.replace(/\s+/g, '_')}`;
+                const isRequired = doc.isRequired !== false;
+                const requiredLabel = isRequired ? '<span class="text-red-500">*</span>' : '<span class="text-gray-500">(Optional)</span>';
+                
+                let acceptAttribute = '.pdf,image/*';
+                if (doc.fileType === 'pdf') {
+                    acceptAttribute = '.pdf';
+                } else if (doc.fileType === 'image') {
+                    acceptAttribute = 'image/*';
+                }
+                
+                const docHTML = `
+                    <div class="border rounded-lg p-4 bg-gray-50">
+                        <div class="flex items-start justify-between mb-3">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">
+                                    <i class="fas fa-file-alt text-indigo-600 mr-2"></i> ${doc.name} ${requiredLabel}
+                                </label>
+                                ${doc.description ? `<p class="text-xs text-gray-600">${doc.description}</p>` : ''}
+                            </div>
+                        </div>
+                        <input 
+                            type="file" 
+                            id="${docId}" 
+                            name="documents" 
+                            class="document-upload-input form-control"
+                            data-doc-name="${doc.name}"
+                            data-doc-required="${isRequired}"
+                            accept="${acceptAttribute}"
+                            ${isRequired ? 'required' : ''}
+                        >
+                        <p class="text-xs text-gray-500 mt-2">Maximum file size: 5MB. Allowed formats: PDF, JPG, PNG</p>
+                        <div class="mt-2 text-xs" id="${docId}-status"></div>
+                    </div>
+                `;
+                docsContainer.innerHTML += docHTML;
+            });
+        } else {
+            docsSection.classList.add('hidden');
+        }
+    }
+    
+    // ============================================
+    // Render Essential Information (Always collected for all loans)
+    // ============================================
     const reqWrap = document.getElementById('additionalRequirements');
     if (reqWrap) {
         reqWrap.innerHTML = '';
         
+        // Essential Identity & Address Information - ALWAYS shown for all loans
+        reqWrap.innerHTML = `
+            <div class="border-b pb-6 mb-6">
+                <h4 class="font-semibold text-slate-700 mb-4 flex items-center gap-2">
+                    <i class="fas fa-id-card text-indigo-600"></i> Essential Information
+                </h4>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Aadhar Information -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">
+                            Aadhar Number <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="aadharNumber" id="aadharNumber" class="form-control" pattern="[0-9]{12}" maxlength="12" placeholder="Enter 12-digit Aadhar" required>
+                        <p class="text-xs text-gray-500 mt-1">Required for identity verification</p>
+                    </div>
+
+                    <!-- Aadhar File Upload -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">
+                            Aadhar Document <span class="text-red-500">*</span>
+                        </label>
+                        <input type="file" name="aadharFile" id="aadharFile" class="form-control" accept=".pdf,image/*" required>
+                        <p class="text-xs text-gray-500 mt-1">Upload Aadhar proof (PDF/JPG/PNG)</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <!-- PAN Information -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">
+                            PAN Number <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="panNumber" id="panNumber" class="form-control" maxlength="10" placeholder="ABCDE1234F" required>
+                        <p class="text-xs text-gray-500 mt-1">Tax identification number (uppercase)</p>
+                    </div>
+
+                    <!-- PAN File Upload -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">
+                            PAN Document <span class="text-red-500">*</span>
+                        </label>
+                        <input type="file" name="panFile" id="panFile" class="form-control" accept=".pdf,image/*" required>
+                        <p class="text-xs text-gray-500 mt-1">Upload PAN proof (PDF/JPG/PNG)</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <!-- Address -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">
+                            Full Address <span class="text-red-500">*</span>
+                        </label>
+                        <textarea name="address" id="address" class="form-control" rows="2" placeholder="Street address, city, state, zip code" required></textarea>
+                        <p class="text-xs text-gray-500 mt-1">Complete residential address</p>
+                    </div>
+
+                    <!-- Phone Number -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">
+                            Contact Number <span class="text-red-500">*</span>
+                        </label>
+                        <input type="tel" name="phone" id="phone" class="form-control" pattern="[0-9]{10}" maxlength="10" placeholder="10-digit mobile number" required>
+                        <p class="text-xs text-gray-500 mt-1">10-digit mobile number</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <!-- Monthly Income -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">
+                            Monthly Income (₹) <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" name="monthlyIncome" id="monthlyIncome" class="form-control" min="0" placeholder="Enter monthly income" required>
+                        <p class="text-xs text-gray-500 mt-1" id="incomeHint">Min required: ₹${loan.minMonthlyIncome?.toLocaleString() || '0'}</p>
+                    </div>
+
+                    <!-- Age -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">
+                            Age <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" name="age" id="age" class="form-control" min="18" max="100" placeholder="Enter your age" required>
+                        <p class="text-xs text-gray-500 mt-1">Age ${loan.minAge || 18} - ${loan.maxAge || 60}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Additional loan-specific documents if configured
         if (loan.requirements && loan.requirements.length) {
-            const items = loan.requirements.map(r => r.toLowerCase());
-            reqWrap.innerHTML += `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
-            
-            // Aadhar number + file
-            if (items.some(x => x.includes('aadhar'))) {
-                reqWrap.innerHTML += `
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Aadhar Number</label>
-                        <input type="text" name="aadharNumber" id="aadharNumber" class="form-control" pattern="[0-9]{12}" maxlength="12" placeholder="Enter 12-digit Aadhar">
-                        <p class="text-xs text-gray-500 mt-1">Or upload Aadhar document</p>
-                        <input type="file" name="aadharFile" id="aadharFile" class="mt-2" accept=".pdf,image/*">
-                    </div>
-                `;
-            }
-
-            // PAN number + file
-            if (items.some(x => x.includes('pan'))) {
-                reqWrap.innerHTML += `
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">PAN Number</label>
-                        <input type="text" name="panNumber" id="panNumber" class="form-control" maxlength="10" placeholder="Enter PAN (ABCDE1234F)">
-                        <p class="text-xs text-gray-500 mt-1">Or upload PAN document</p>
-                        <input type="file" name="panFile" id="panFile" class="mt-2" accept=".pdf,image/*">
-                    </div>
-                `;
-            }
-
-            reqWrap.innerHTML += `</div>`;
-
-            // Generic other documents
             const otherReqs = loan.requirements.filter(r => !/aadhar|pan/i.test(r));
             if (otherReqs.length) {
                 reqWrap.innerHTML += `
-                    <div class="mt-3 text-sm text-gray-700">
-                        <p class="font-semibold">Additional documents required:</p>
-                        <ul class="list-disc pl-5 text-xs text-gray-600">
-                            ${otherReqs.map(r => `<li>${r}</li>`).join('')}
-                        </ul>
-                        <p class="mt-2 text-xs text-gray-500">You may attach up to 5 additional documents here:</p>
-                        <input type="file" name="otherFiles" id="otherFiles" class="mt-2" multiple accept=".pdf,image/*">
+                    <div class="border-b pb-6 mb-6">
+                        <h4 class="font-semibold text-slate-700 mb-4 flex items-center gap-2">
+                            <i class="fas fa-file-contract text-indigo-600"></i> Additional Requirements
+                        </h4>
+                        <div class="text-sm text-gray-700">
+                            <p class="font-semibold mb-2">Documents required:</p>
+                            <ul class="list-disc pl-5 text-xs text-gray-600 mb-3">
+                                ${otherReqs.map(r => `<li>${r}</li>`).join('')}
+                            </ul>
+                            <p class="text-xs text-gray-500 mb-2">You may attach up to 5 additional documents:</p>
+                            <input type="file" name="otherFiles" id="otherFiles" class="form-control" multiple accept=".pdf,image/*">
+                        </div>
                     </div>
                 `;
             }
@@ -279,6 +399,29 @@ document.addEventListener('input', (e) => {
     }
 });
 
+// Phone Number field - only numbers, max 10 digits
+document.addEventListener('input', (e) => {
+    if (e.target.id === 'phone') {
+        e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
+    }
+});
+
+// Age field - only numbers, max 3 digits
+document.addEventListener('input', (e) => {
+    if (e.target.id === 'age') {
+        e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 3);
+    }
+});
+
+// Monthly Income field - only numbers
+document.addEventListener('input', (e) => {
+    if (e.target.id === 'monthlyIncome') {
+        if (parseFloat(e.target.value) < 0) {
+            e.target.value = 0;
+        }
+    }
+});
+
 // ============================================
 // FORM SUBMISSION AND EVENT HANDLERS
 // ============================================
@@ -335,6 +478,75 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // ============================================
+            // Validate Essential Information (Always Required)
+            // ============================================
+            const aadharEl = document.getElementById('aadharNumber');
+            const aadharFileEl = document.getElementById('aadharFile');
+            const panEl = document.getElementById('panNumber');
+            const panFileEl = document.getElementById('panFile');
+            const addressEl = document.getElementById('address');
+            const phoneEl = document.getElementById('phone');
+            const incomeEl = document.getElementById('monthlyIncome');
+            const ageEl = document.getElementById('age');
+
+            // Validate Aadhar
+            if (!aadharEl || !aadharEl.value || aadharEl.value.length !== 12) {
+                errEl.textContent = 'Please enter a valid 12-digit Aadhar number';
+                return;
+            }
+            if (!aadharFileEl || !aadharFileEl.files || aadharFileEl.files.length === 0) {
+                errEl.textContent = 'Please upload Aadhar document (required)';
+                return;
+            }
+
+            // Validate PAN
+            if (!panEl || !panEl.value || panEl.value.length !== 10) {
+                errEl.textContent = 'Please enter a valid PAN number (10 characters)';
+                return;
+            }
+            if (!panFileEl || !panFileEl.files || panFileEl.files.length === 0) {
+                errEl.textContent = 'Please upload PAN document (required)';
+                return;
+            }
+
+            // Validate Address
+            if (!addressEl || !addressEl.value || addressEl.value.trim().length < 10) {
+                errEl.textContent = 'Please enter a complete address (at least 10 characters)';
+                return;
+            }
+
+            // Validate Phone
+            const phone = phoneEl ? phoneEl.value.trim() : '';
+            if (!phone || phone.length !== 10 || !/^\d{10}$/.test(phone)) {
+                errEl.textContent = 'Please enter a valid 10-digit mobile number';
+                return;
+            }
+
+            // Validate Monthly Income
+            const income = incomeEl ? parseFloat(incomeEl.value) : 0;
+            if (isNaN(income) || income < selectedLoan.minMonthlyIncome) {
+                errEl.textContent = `Monthly income must be at least ₹${selectedLoan.minMonthlyIncome?.toLocaleString() || '0'}`;
+                return;
+            }
+
+            // Validate Age
+            const age = ageEl ? parseInt(ageEl.value) : 0;
+            if (isNaN(age) || age < (selectedLoan.minAge || 18) || age > (selectedLoan.maxAge || 60)) {
+                errEl.textContent = `Age must be between ${selectedLoan.minAge || 18} and ${selectedLoan.maxAge || 60} years`;
+                return;
+            }
+
+            // Validate file sizes for essential docs
+            const allFiles = [aadharFileEl?.files[0], panFileEl?.files[0]].filter(f => f);
+            for (let file of allFiles) {
+                const maxSize = 5 * 1024 * 1024; // 5MB
+                if (file.size > maxSize) {
+                    errEl.textContent = `File "${file.name}" exceeds maximum size of 5MB`;
+                    return;
+                }
+            }
+
             const applyingToast = typeof notificationManager !== 'undefined'
                 ? notificationManager.loading('Submitting Application', 'We are submitting your application...')
                 : null;
@@ -346,27 +558,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 formData.append('tenureMonths', tenure);
                 formData.append('purpose', purpose);
 
-                // Optional fields
-                const aadharNumberEl = document.getElementById('aadharNumber');
-                const panNumberEl = document.getElementById('panNumber');
-                if (aadharNumberEl && aadharNumberEl.value.trim()) {
-                    formData.append('aadharNumber', aadharNumberEl.value.trim());
-                }
-                if (panNumberEl && panNumberEl.value.trim()) {
-                    formData.append('panNumber', panNumberEl.value.trim());
-                }
+                // Essential Information (Required for all loans)
+                formData.append('aadharNumber', aadharEl.value.trim());
+                formData.append('panNumber', panEl.value.trim());
+                formData.append('address', addressEl.value.trim());
+                formData.append('phone', phoneEl.value.trim());
+                formData.append('monthlyIncome', Number(incomeEl.value));
+                formData.append('age', Number(ageEl.value));
 
-                // Files
-                const aadharFileEl = document.getElementById('aadharFile');
-                const panFileEl = document.getElementById('panFile');
-                const otherFilesEl = document.getElementById('otherFiles');
-                
-                if (aadharFileEl && aadharFileEl.files && aadharFileEl.files[0]) {
+                // Essential document files
+                if (aadharFileEl && aadharFileEl.files[0]) {
                     formData.append('aadharFile', aadharFileEl.files[0]);
                 }
-                if (panFileEl && panFileEl.files && panFileEl.files[0]) {
+                if (panFileEl && panFileEl.files[0]) {
                     formData.append('panFile', panFileEl.files[0]);
                 }
+
+                // Files - All structured document uploads
+                const documentInputs = document.querySelectorAll('.document-upload-input');
+                let fileCount = 0;
+                
+                documentInputs.forEach((input, idx) => {
+                    if (input.files && input.files.length > 0) {
+                        for (let file of input.files) {
+                            formData.append(`documents`, file);
+                            fileCount++;
+                        }
+                    }
+                });
+
+                // Legacy field support for optional additional files
+                const otherFilesEl = document.getElementById('otherFiles');
                 if (otherFilesEl && otherFilesEl.files && otherFilesEl.files.length) {
                     for (let i = 0; i < otherFilesEl.files.length; i++) {
                         formData.append('otherFiles', otherFilesEl.files[i]);

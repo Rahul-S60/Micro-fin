@@ -174,7 +174,7 @@
         <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center p-6 border-b border-gray-200 sticky top-0 bg-white">
                 <h3 class="text-xl font-bold">Application Details</h3>
-                <button onclick="closeAppModal()" class="text-gray-500 hover:text-gray-700">
+                <button id="closeAppModalBtn" class="text-gray-500 hover:text-gray-700">
                     <i class="fas fa-times text-2xl"></i>
                 </button>
             </div>
@@ -189,7 +189,7 @@
         <div class="bg-white rounded-lg max-w-md w-full">
             <div class="flex justify-between items-center p-6 border-b border-gray-200">
                 <h3 class="text-xl font-bold" id="actionTitle">Approve Application</h3>
-                <button onclick="closeActionModal()" class="text-gray-500 hover:text-gray-700">
+                <button id="closeActionModalBtn" class="text-gray-500 hover:text-gray-700">
                     <i class="fas fa-times text-2xl"></i>
                 </button>
             </div>
@@ -199,10 +199,10 @@
                         <!-- Content will be populated -->
                     </div>
                     <div class="flex gap-2 pt-4">
-                        <button onclick="submitAction()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition" id="actionBtn">
+                        <button id="actionBtn" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition">
                             Submit
                         </button>
-                        <button onclick="closeActionModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg transition">
+                        <button id="cancelActionBtn" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg transition">
                             Cancel
                         </button>
                     </div>
@@ -216,7 +216,7 @@
         <div class="bg-white rounded-lg max-w-md w-full">
             <div class="flex justify-between items-center p-6 border-b border-gray-200">
                 <h3 class="text-xl font-bold" id="docRemarksTitle">Document Verification</h3>
-                <button onclick="closeDocRemarksModal()" class="text-gray-500 hover:text-gray-700">
+                <button id="closeDocRemarksModalBtn" class="text-gray-500 hover:text-gray-700">
                     <i class="fas fa-times text-2xl"></i>
                 </button>
             </div>
@@ -227,10 +227,10 @@
                         <textarea id="docRemarksInput" placeholder="Enter remarks..." class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3"></textarea>
                     </div>
                     <div class="flex gap-2 pt-4 border-t border-gray-200">
-                        <button onclick="submitDocRemarks()" class="flex-1 text-white px-4 py-2 rounded-lg transition" id="docRemarksBtn">
+                        <button id="submitDocRemarksBtn" class="flex-1 text-white px-4 py-2 rounded-lg transition">
                             Submit
                         </button>
-                        <button onclick="closeDocRemarksModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg transition">
+                        <button id="cancelDocRemarksBtn" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg transition">
                             Cancel
                         </button>
                     </div>
@@ -359,7 +359,7 @@
                                 <td class="text-sm text-gray-600">${new Date(app.createdAt).toLocaleDateString()}</td>
                                 <td>
                                     <div class="flex gap-2">
-                                        <button onclick="viewApplication('${app._id}')" class="text-indigo-600 hover:text-indigo-800" title="View Details">
+                                        <button data-action="view" data-app-id="${app._id}" class="btn-view-app text-indigo-600 hover:text-indigo-800" title="View Details">
                                             <i class="fas fa-eye"></i>
                                         </button>
                                         ${getActionButtons(app)}
@@ -397,16 +397,16 @@
             let buttons = '';
             if (isPending) {
                 buttons = `
-                    <button onclick="openApprovalModal('${app._id}')" class="text-green-600 hover:text-green-800" title="Approve">
+                    <button data-action="approve" data-app-id="${app._id}" class="btn-approve-app text-green-600 hover:text-green-800" title="Approve">
                         <i class="fas fa-check"></i>
                     </button>
-                    <button onclick="openRejectionModal('${app._id}')" class="text-red-600 hover:text-red-800" title="Reject">
+                    <button data-action="reject" data-app-id="${app._id}" class="btn-reject-app text-red-600 hover:text-red-800" title="Reject">
                         <i class="fas fa-times"></i>
                     </button>
                 `;
             } else if (isApproved) {
                 buttons = `
-                    <button onclick="openActivateModal('${app._id}')" class="text-blue-600 hover:text-blue-800" title="Activate">
+                    <button data-action="activate" data-app-id="${app._id}" class="btn-activate-app text-blue-600 hover:text-blue-800" title="Activate">
                         <i class="fas fa-play"></i>
                     </button>
                 `;
@@ -471,8 +471,8 @@
                                             <div class="flex items-center gap-3">
                                                 ${doc.url ? `<a href="${doc.url}" target="_blank" class="text-indigo-600 hover:underline" download>Download</a>` : `<span class="text-gray-500">No file uploaded</span>`}
                                                 <div>
-                                                    ${doc.verification?.status !== 'verified' ? `<button onclick="confirmAppDocAction('${app._id}','${doc._id}','verify')" class="text-green-600 hover:text-green-800 ml-3" title="Verify"><i class="fas fa-check"></i></button>` : ''}
-                                                    ${doc.verification?.status !== 'rejected' ? `<button onclick="confirmAppDocAction('${app._id}','${doc._id}','reject')" class="text-red-600 hover:text-red-800 ml-3" title="Reject"><i class="fas fa-times"></i></button>` : ''}
+                                                    ${doc.verification?.status !== 'verified' ? `<button data-action="verify-doc" data-app-id="${app._id}" data-doc-id="${doc._id}" class="btn-verify-doc text-green-600 hover:text-green-800 ml-3" title="Verify"><i class="fas fa-check"></i></button>` : ''}
+                                                    ${doc.verification?.status !== 'rejected' ? `<button data-action="reject-doc" data-app-id="${app._id}" data-doc-id="${doc._id}" class="btn-reject-doc text-red-600 hover:text-red-800 ml-3" title="Reject"><i class="fas fa-times"></i></button>` : ''}
                                                 </div>
                                             </div>
                                         </div>
@@ -600,7 +600,7 @@
             document.getElementById('docRemarksInput').placeholder = action === 'reject' ? 'Enter rejection reason (min 3 characters)...' : 'Enter remarks...';
             document.getElementById('docRemarksInput').value = '';
             
-            const btn = document.getElementById('docRemarksBtn');
+            const btn = document.getElementById('submitDocRemarksBtn');
             btn.textContent = action === 'verify' ? 'Verify' : 'Reject';
             btn.className = action === 'verify' 
                 ? 'flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition'
@@ -700,6 +700,82 @@
         document.getElementById('mobileOverlay').addEventListener('click', () => {
             document.getElementById('sidebar').classList.remove('active');
             document.getElementById('mobileOverlay').classList.remove('active');
+        });
+
+        // Event Delegation for Button Clicks (CSP Compliant)
+        document.addEventListener('click', (e) => {
+            // View Application Button
+            if (e.target.closest('.btn-view-app')) {
+                const appId = e.target.closest('.btn-view-app').dataset.appId;
+                viewApplication(appId);
+            }
+            
+            // Approve Application Button
+            if (e.target.closest('.btn-approve-app')) {
+                const appId = e.target.closest('.btn-approve-app').dataset.appId;
+                openApprovalModal(appId);
+            }
+            
+            // Reject Application Button
+            if (e.target.closest('.btn-reject-app')) {
+                const appId = e.target.closest('.btn-reject-app').dataset.appId;
+                openRejectionModal(appId);
+            }
+            
+            // Activate Application Button
+            if (e.target.closest('.btn-activate-app')) {
+                const appId = e.target.closest('.btn-activate-app').dataset.appId;
+                openActivateModal(appId);
+            }
+            
+            // Close Application Details Modal
+            if (e.target.closest('#closeAppModalBtn')) {
+                closeAppModal();
+            }
+            
+            // Close Action Modal
+            if (e.target.closest('#closeActionModalBtn')) {
+                closeActionModal();
+            }
+            
+            // Cancel Action Modal
+            if (e.target.closest('#cancelActionBtn')) {
+                closeActionModal();
+            }
+            
+            // Submit Action Button
+            if (e.target.closest('#actionBtn')) {
+                submitAction();
+            }
+            
+            // Close Document Remarks Modal
+            if (e.target.closest('#closeDocRemarksModalBtn')) {
+                closeDocRemarksModal();
+            }
+            
+            // Cancel Document Remarks Modal
+            if (e.target.closest('#cancelDocRemarksBtn')) {
+                closeDocRemarksModal();
+            }
+            
+            // Submit Document Remarks Button
+            if (e.target.closest('#submitDocRemarksBtn')) {
+                submitDocRemarks();
+            }
+
+            // Verify Document Button
+            if (e.target.closest('.btn-verify-doc')) {
+                const appId = e.target.closest('.btn-verify-doc').dataset.appId;
+                const docId = e.target.closest('.btn-verify-doc').dataset.docId;
+                confirmAppDocAction(appId, docId, 'verify');
+            }
+
+            // Reject Document Button
+            if (e.target.closest('.btn-reject-doc')) {
+                const appId = e.target.closest('.btn-reject-doc').dataset.appId;
+                const docId = e.target.closest('.btn-reject-doc').dataset.docId;
+                confirmAppDocAction(appId, docId, 'reject');
+            }
         });
     </script>
     <script src="/js/notifications.js"></script>

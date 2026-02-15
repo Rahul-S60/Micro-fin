@@ -157,6 +157,21 @@
                         <textarea id="description" required minlength="10" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3" placeholder="Product description"></textarea>
                     </div>
 
+                    <!-- Required Documents Section -->
+                    <div class="border-t pt-4 mt-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="block text-sm font-medium text-gray-700">
+                                <i class="fas fa-file-upload text-indigo-600 mr-2"></i> Required Documents
+                            </label>
+                            <button type="button" id="addDocumentBtn" class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-200">
+                                <i class="fas fa-plus mr-1"></i> Add Document
+                            </button>
+                        </div>
+                        <div id="documentsContainer" class="space-y-3 bg-gray-50 p-3 rounded-lg">
+                            <p class="text-xs text-gray-600">No required documents added yet. Click "Add Document" to specify what documents customers must provide.</p>
+                        </div>
+                    </div>
+
                     <div>
                         <label class="flex items-center gap-2">
                             <input type="checkbox" id="isActive" checked class="rounded">
@@ -197,9 +212,51 @@
         if (!token) window.location.href = '/admin/login';
 
         let currentEditId = null;
+        let currentDocuments = []; // Store required documents
 
         // Initialize
         loadProducts();
+
+        // Document Management Functions
+        function openAddModal() {
+            document.getElementById('productModalTitle').textContent = 'Add New Product';
+            document.getElementById('productForm').reset();
+            document.getElementById('isActive').checked = true;
+            currentEditId = null;
+            currentDocuments = [];
+            renderDocuments();
+            document.getElementById('productModal').classList.remove('hidden');
+        }
+
+        function renderDocuments() {
+            const container = document.getElementById('documentsContainer');
+            if (currentDocuments.length === 0) {
+                container.innerHTML = '<p class="text-xs text-gray-600">No required documents added yet. Click "Add Document" to specify what documents customers must provide.</p>';
+                return;
+            }
+            container.innerHTML = currentDocuments.map((doc, idx) => `
+                <div class="bg-white p-3 rounded border border-gray-200 flex items-center justify-between">
+                    <div class="flex-1"><p class="text-sm font-medium">${doc.name}</p>${doc.description ? `<p class="text-xs text-gray-600">${doc.description}</p>` : ''}<p class="text-xs text-gray-500">Type: ${doc.fileType} • ${doc.isRequired ? 'Required' : 'Optional'}</p></div>
+                    <button type="button" class="remove-doc-btn text-red-600 ml-2" data-idx="${idx}"><i class="fas fa-trash"></i></button>
+                </div>
+            `).join('');
+            document.querySelectorAll('.remove-doc-btn').forEach(btn => btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                currentDocuments.splice(parseInt(btn.dataset.idx), 1);
+                renderDocuments();
+            }));
+        }
+
+        document.getElementById('addDocumentBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            const docName = prompt('Enter document name (e.g., Aadhar, PAN, Bank Statement):');
+            if (!docName) return;
+            const docDescription = prompt('Enter description (optional):') || '';
+            const fileType = ['pdf', 'image', 'document', 'any'].includes(prompt('File type (pdf/image/document/any):', 'document') || 'document') ? prompt('File type (pdf/image/document/any):', 'document') : 'document';
+            const isRequired = confirm('Is this document required?');
+            currentDocuments.push({ name: docName, description: docDescription, fileType: fileType || 'document', isRequired });
+            renderDocuments();
+        });
 
         // Event Listeners
         document.getElementById('addProductBtn').addEventListener('click', openAddModal);
@@ -339,6 +396,8 @@
                     document.getElementById('maxTenure').value = product.maxTenureMonths;
                     document.getElementById('description').value = product.description || '';
                     document.getElementById('isActive').checked = product.isActive;
+                    currentDocuments = product.requiredDocuments || [];
+                    renderDocuments();
                     document.getElementById('productModal').classList.remove('hidden');
                 }
             } catch (error) {
@@ -363,7 +422,8 @@
                 minTenureMonths: parseInt(document.getElementById('minTenure').value),
                 maxTenureMonths: parseInt(document.getElementById('maxTenure').value),
                 description: document.getElementById('description').value,
-                isActive: document.getElementById('isActive').checked
+                isActive: document.getElementById('isActive').checked,
+                requiredDocuments: currentDocuments
             };
 
             if (productData.minAmount >= productData.maxAmount) {

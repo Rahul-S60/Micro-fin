@@ -82,7 +82,8 @@ router.post(
     const fields = upload.fields([
       { name: 'aadharFile', maxCount: 1 },
       { name: 'panFile', maxCount: 1 },
-      { name: 'otherFiles', maxCount: 5 }
+      { name: 'otherFiles', maxCount: 5 },
+      { name: 'documents', maxCount: 20 } // Support the new documents field
     ]);
     
     fields(req, res, (err) => {

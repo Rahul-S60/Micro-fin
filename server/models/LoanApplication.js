@@ -44,6 +44,32 @@ const loanApplicationSchema = new mongoose.Schema(
       required: true,
     },
 
+    // Applicant Personal Information (collected at application time)
+    aadharNumber: {
+      type: String,
+      default: null,
+    },
+    panNumber: {
+      type: String,
+      default: null,
+    },
+    applicantAddress: {
+      type: String,
+      default: null,
+    },
+    applicantPhone: {
+      type: String,
+      default: null,
+    },
+    applicantAge: {
+      type: Number,
+      default: null,
+    },
+    applicantMonthlyIncome: {
+      type: Number,
+      default: null,
+    },
+
     // Status Tracking
     status: {
       type: String,

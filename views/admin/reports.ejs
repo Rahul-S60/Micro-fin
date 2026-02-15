@@ -72,11 +72,11 @@
                     <div class="flex gap-2">
                         <input type="date" id="startDate" class="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <input type="date" id="endDate" class="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <button id="filterBtn" onclick="loadReports()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition">
+                        <button id="filterBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition">
                             <i class="fas fa-filter"></i> Apply
                         </button>
                     </div>
-                    <button id="exportBtn" onclick="exportReport()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition">
+                    <button id="exportBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition">
                         <i class="fas fa-download"></i> Export
                     </button>
                 </div>
@@ -111,13 +111,17 @@
                 <!-- Application Status Distribution -->
                 <div class="card">
                     <h3 class="text-lg font-bold mb-4">Application Status Distribution</h3>
-                    <canvas id="statusChart" height="300"></canvas>
+                    <div style="height: 300px; position: relative;">
+                        <canvas id="statusChart"></canvas>
+                    </div>
                 </div>
 
                 <!-- Monthly Disbursement Trend -->
                 <div class="card">
                     <h3 class="text-lg font-bold mb-4">Monthly Disbursement Trend</h3>
-                    <canvas id="disbursementChart" height="300"></canvas>
+                    <div style="height: 300px; position: relative;">
+                        <canvas id="disbursementChart"></canvas>
+                    </div>
                 </div>
             </div>
 
@@ -126,13 +130,17 @@
                 <!-- Loan by Category -->
                 <div class="card">
                     <h3 class="text-lg font-bold mb-4">Loans by Category</h3>
-                    <canvas id="categoryChart" height="300"></canvas>
+                    <div style="height: 300px; position: relative;">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
                 </div>
 
                 <!-- KYC Status Distribution -->
                 <div class="card">
                     <h3 class="text-lg font-bold mb-4">Customer KYC Status</h3>
-                    <canvas id="kycChart" height="300"></canvas>
+                    <div style="height: 300px; position: relative;">
+                        <canvas id="kycChart"></canvas>
+                    </div>
                 </div>
             </div>
 
@@ -219,52 +227,46 @@
         </main>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script>
+        // Check authentication
         const token = localStorage.getItem('adminToken');
-        if (!token) window.location.href = '/admin/login';
-
-        let statusChart, disbursementChart, categoryChart, kycChart;
-        const chartConfigs = {};
-
-        // Wait for Chart.js to be available
-        function initializeApp() {
-            if (typeof Chart === 'undefined') {
-                // Chart.js not ready yet, retry after 100ms
-                setTimeout(initializeApp, 100);
-                return;
-            }
-
-            // Initialize when DOM is ready
-            document.addEventListener('DOMContentLoaded', function() {
-                // Initialize dates
-                const today = new Date();
-                const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
-                
-                const endDateEl = document.getElementById('endDate');
-                const startDateEl = document.getElementById('startDate');
-                
-                if (endDateEl) endDateEl.value = today.toISOString().split('T')[0];
-                if (startDateEl) startDateEl.value = thirtyDaysAgo.toISOString().split('T')[0];
-
-                // Event Listeners
-                const filterBtn = document.getElementById('filterBtn');
-                const exportBtn = document.getElementById('exportBtn');
-                const logoutBtn = document.getElementById('logoutBtn');
-                
-                if (filterBtn) filterBtn.addEventListener('click', loadReports);
-                if (exportBtn) exportBtn.addEventListener('click', exportReport);
-                if (logoutBtn) logoutBtn.addEventListener('click', logout);
-
-                // Initialize
-                loadReports();
-            });
+        if (!token) {
+            window.location.href = '/admin/login';
         }
 
-        // Start initialization
-        initializeApp();
+        // Global chart variables
+        let statusChart, disbursementChart, categoryChart, kycChart;
 
-        // Functions
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set default date range (30 days)
+            const today = new Date();
+            const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+            
+            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+            document.getElementById('startDate').value = thirtyDaysAgo.toISOString().split('T')[0];
+
+            // Bind event listeners
+            document.getElementById('filterBtn').addEventListener('click', loadReports);
+            document.getElementById('exportBtn').addEventListener('click', exportReport);
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+
+            // Mobile menu toggle
+            document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+                document.getElementById('sidebar').classList.toggle('active');
+                document.getElementById('mobileOverlay').classList.toggle('active');
+            });
+
+            document.getElementById('mobileOverlay').addEventListener('click', () => {
+                document.getElementById('sidebar').classList.remove('active');
+                document.getElementById('mobileOverlay').classList.remove('active');
+            });
+
+            // Load initial data
+            loadReports();
+        });
+
+        // Load reports data
         async function loadReports() {
             try {
                 const startDate = document.getElementById('startDate').value;
@@ -327,6 +329,7 @@
             }
         }
 
+        // Update metrics with data
         function updateMetrics(stats, customers, applications) {
             if (!stats) {
                 console.error('Stats object is missing');
@@ -376,6 +379,7 @@
             updateElement('metricRiskChange', '0.5');
         }
 
+        // Calculate interest revenue
         function calculateRevenue(applications) {
             if (!applications || !Array.isArray(applications)) {
                 return 0;
@@ -392,6 +396,7 @@
                 }, 0);
         }
 
+        // Generate charts
         function generateCharts(customers, applications, stats) {
             // Check if canvas elements exist
             const statusChartEl = document.getElementById('statusChart');
@@ -402,6 +407,24 @@
             if (!statusChartEl || !disbursementChartEl || !categoryChartEl || !kycChartEl) {
                 console.error('Chart canvas elements not found');
                 return;
+            }
+
+            // Destroy existing charts to prevent memory leaks
+            if (statusChart) {
+                statusChart.destroy();
+                statusChart = null;
+            }
+            if (disbursementChart) {
+                disbursementChart.destroy();
+                disbursementChart = null;
+            }
+            if (categoryChart) {
+                categoryChart.destroy();
+                categoryChart = null;
+            }
+            if (kycChart) {
+                kycChart.destroy();
+                kycChart = null;
             }
 
             // Status Distribution
@@ -421,7 +444,6 @@
                 });
             }
 
-            if (statusChart) statusChart.destroy();
             const statusCtx = statusChartEl.getContext('2d');
             statusChart = new Chart(statusCtx, {
                 type: 'doughnut',
@@ -456,7 +478,6 @@
                 kycCounts.rejected = customers.filter(c => c.kycStatus === 'rejected').length;
             }
 
-            if (kycChart) kycChart.destroy();
             const kycCtx = kycChartEl.getContext('2d');
             kycChart = new Chart(kycCtx, {
                 type: 'doughnut',
@@ -487,7 +508,6 @@
                 });
             }
 
-            if (categoryChart) categoryChart.destroy();
             const categoryCtx = categoryChartEl.getContext('2d');
             categoryChart = new Chart(categoryCtx, {
                 type: 'bar',
@@ -515,7 +535,6 @@
 
             // Monthly Disbursement Trend
             const monthlyData = generateMonthlyData(applications);
-            if (disbursementChart) disbursementChart.destroy();
             const disbursementCtx = disbursementChartEl.getContext('2d');
             disbursementChart = new Chart(disbursementCtx, {
                 type: 'line',
@@ -550,6 +569,7 @@
             });
         }
 
+        // Generate monthly data
         function generateMonthlyData(applications) {
             const monthlyTotals = {};
             
@@ -577,6 +597,7 @@
             };
         }
 
+        // Export report as CSV
         function exportReport() {
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
@@ -610,24 +631,15 @@
             a.href = url;
             a.download = `analytics_report_${Date.now()}.csv`;
             a.click();
+            window.URL.revokeObjectURL(url);
         }
 
+        // Logout function
         function logout() {
             localStorage.removeItem('adminToken');
             localStorage.removeItem('admin');
             window.location.href = '/admin/login';
         }
-
-        // Mobile menu toggle
-        document.getElementById('mobileMenuBtn').addEventListener('click', () => {
-            document.getElementById('sidebar').classList.toggle('active');
-            document.getElementById('mobileOverlay').classList.toggle('active');
-        });
-
-        document.getElementById('mobileOverlay').addEventListener('click', () => {
-            document.getElementById('sidebar').classList.remove('active');
-            document.getElementById('mobileOverlay').classList.remove('active');
-        });
     </script>
     <script src="/js/notifications.js"></script>
     <script src="/js/main.js"></script>

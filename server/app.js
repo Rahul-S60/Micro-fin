@@ -26,7 +26,7 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.tailwindcss.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com"],
       fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
       imgSrc: ["'self'", "data:", "https:"],
       connectSrc: ["'self'"]
@@ -164,13 +164,17 @@ app.get('/admin/dashboard', (req, res) => {
   });
 });
 
-// Redirect all other admin pages to the main dashboard
+// Admin Management Pages
 app.get('/admin/customers', (req, res) => {
-  res.redirect('/admin/dashboard');
+  res.render('admin/customers', {
+    title: 'Customers - Admin',
+  });
 });
 
 app.get('/admin/applications', (req, res) => {
-  res.redirect('/admin/dashboard');
+  res.render('admin/applications', {
+    title: 'Applications - Admin',
+  });
 });
 
 app.get('/admin/loan-products', (req, res) => {
@@ -180,14 +184,21 @@ app.get('/admin/loan-products', (req, res) => {
 });
 
 app.get('/admin/kyc', (req, res) => {
-  res.redirect('/admin/dashboard');
+  res.render('admin/kyc', {
+    title: 'KYC Verification - Admin',
+  });
 });
 
 app.get('/admin/reports', (req, res) => {
-  res.redirect('/admin/dashboard');
+  res.render('admin/reports', {
+    title: 'Reports - Admin',
+  });
 });
+
 app.get('/admin/settings', (req, res) => {
-  res.redirect('/admin/dashboard');
+  res.render('admin/settings', {
+    title: 'Settings - Admin',
+  });
 });
 
 // ============================================
